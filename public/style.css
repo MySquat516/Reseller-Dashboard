@@ -28,7 +28,15 @@ button:hover { border-color: var(--accent); }
 button.tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.danger { color: var(--bad); border-color: var(--bad); background: transparent; }
-main { max-width: 1280px; margin: 0 auto; padding: 20px; }
+main { max-width: 1280px; margin: 0 auto; padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); }
+html { -webkit-text-size-adjust: 100%; }
+button, .tab, .item, .thumb { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+/* iOS zoomt in Eingabefelder unter 16px hinein – auf dem Handy daher mindestens 16px */
+@media (max-width: 760px) {
+  input, select, textarea { font-size: 16px; }
+  main { padding-left: 14px; padding-right: 14px; }
+  header { padding: 10px 14px; }
+}
 
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }

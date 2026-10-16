@@ -25,6 +25,21 @@ npm install
 npm start
 ```
 
+## Als App auf dem Handy nutzen
+
+Die Weboberfläche ist für Handys ausgelegt und lässt sich wie eine App auf den Homescreen legen:
+
+- **iPhone (Safari):** Teilen-Symbol → „Zum Home-Bildschirm". Danach öffnet sich die App im Vollbild.
+- **Android (Chrome):** Menü → „Zum Startbildschirm hinzufügen". Als vollständig installierte App bietet
+  Chrome das nur über HTTPS an.
+
+Das funktioniert auch über reines HTTP (`http://<server-ip>:3000`). Ohne HTTPS bleibt der Service Worker
+inaktiv, die App braucht dann immer eine Verbindung zum Server (kein Offline-Betrieb).
+
+Von unterwegs: erst per VPN (z. B. WireGuard) ins Heimnetz verbinden und dann dieselbe Adresse öffnen.
+Der Datenverkehr ist durch das VPN verschlüsselt. Die App hat keinen eigenen Login und gehört nicht
+ungeschützt ins Internet.
+
 ## Funktionen
 
 - Artikel mit Titel, Beschreibung, Größe, Kategorie, Marke, Zustand und Notizen
