@@ -3,6 +3,10 @@
 Artikelverwaltung mit Bild-Upload und Finanz-Dashboard für Reseller.
 Stack: Node.js, Express, SQLite (better-sqlite3), Chart.js, Vanilla-JS-Frontend.
 
+> **Hinweis:** Diese App wurde mit Hilfe von KI (Claude von Anthropic) entwickelt.
+> Idee, Anforderungen und Tests kommen vom Projektinhaber, der Code wurde KI-gestützt geschrieben.
+> Bitte vor dem produktiven Einsatz selbst prüfen.
+
 ## Starten mit Docker
 
 ```bash
