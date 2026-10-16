@@ -1,0 +1,18 @@
+services:
+  reseller:
+    build: .                      # baut das Image aus dem Dockerfile in diesem Ordner
+    image: reseller-dashboard:latest
+    container_name: reseller-dashboard
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"      # anderer Host-Port: PORT=8080 docker compose up -d
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - ./data:/data              # SQLite-Datenbank (reseller.db) und hochgeladene Bilder (uploads/)
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

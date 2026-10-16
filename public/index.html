@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reseller Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>📦 Reseller Dashboard</h1>
+  <nav>
+    <button class="tab active" data-view="dashboard">Dashboard</button>
+    <button class="tab" data-view="items">Artikel</button>
+    <button class="primary" id="btn-new">+ Neuer Artikel</button>
+  </nav>
+</header>
+
+<main>
+  <!-- Dashboard -->
+  <section id="view-dashboard">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="card wide"><h3>Umsatz &amp; Gewinn pro Monat</h3><canvas id="ch-monthly"></canvas></div>
+      <div class="card"><h3>Gewinn nach Plattform</h3><canvas id="ch-platform"></canvas></div>
+      <div class="card"><h3>Zahlungsarten</h3><canvas id="ch-payment"></canvas></div>
+      <div class="card"><h3>Marge nach Kategorie</h3><canvas id="ch-category"></canvas></div>
+      <div class="card"><h3>Bestand nach Status</h3><canvas id="ch-status"></canvas></div>
+      <div class="card"><h3>Marken-Ranking</h3><div id="tbl-brand"></div></div>
+      <div class="card"><h3>Ladenhüter (60+ Tage)</h3><div id="tbl-dead"></div></div>
+    </div>
+  </section>
+
+  <!-- Artikelliste -->
+  <section id="view-items" hidden>
+    <div class="filters">
+      <input id="f-search" placeholder="Suchen (Titel, Marke, Kategorie …)">
+      <select id="f-status">
+        <option value="">Alle Status</option>
+        <option value="lager">Lager</option>
+        <option value="online">Online</option>
+        <option value="verkauft">Verkauft</option>
+        <option value="versendet">Versendet</option>
+      </select>
+    </div>
+    <div id="items-list" class="items"></div>
+  </section>
+</main>
+
+<!-- Formular-Dialog -->
+<dialog id="dlg">
+  <form id="form" method="dialog">
+    <h2 id="dlg-title">Neuer Artikel</h2>
+    <div class="cols">
+      <fieldset>
+        <legend>Artikel</legend>
+        <label>Titel* <input name="title" required></label>
+        <label>Beschreibung <textarea name="description" rows="3"></textarea></label>
+        <div class="row">
+          <label>Größe <input name="size"></label>
+          <label>Kategorie <input name="category" list="dl-category"></label>
+        </div>
+        <div class="row">
+          <label>Marke <input name="brand" list="dl-brand"></label>
+          <label>Zustand
+            <select name="condition">
+              <option value="">–</option><option>Neu mit Etikett</option><option>Neu</option>
+              <option>Sehr gut</option><option>Gut</option><option>Zufriedenstellend</option>
+            </select>
+          </label>
+        </div>
+        <label>Status
+          <select name="status">
+            <option value="lager">Lager</option><option value="online">Online</option>
+            <option value="verkauft">Verkauft</option><option value="versendet">Versendet</option>
+          </select>
+        </label>
+        <label>Notizen <textarea name="notes" rows="2"></textarea></label>
+        <div id="dropzone" class="dropzone" tabindex="0" role="button">
+          📷 Bilder hierher ziehen, einfügen (Strg+V) oder tippen zum Auswählen
+          <small>Mehrere gleichzeitig möglich, bis zu 60 pro Artikel. Große Fotos werden automatisch verkleinert.</small>
+        </div>
+        <input type="file" id="files" accept="image/*" multiple hidden>
+        <div id="gallery" class="thumbs"></div>
+        <small id="gallery-count" class="hint"></small>
+      </fieldset>
+
+      <fieldset>
+        <legend>Preise &amp; Verkauf</legend>
+        <div class="row">
+          <label>Einkaufspreis € <input type="number" step="0.01" min="0" name="purchase_price"></label>
+          <label>Gekauft am <input type="date" name="purchase_date"></label>
+        </div>
+        <div class="row">
+          <label>Einstellpreis € <input type="number" step="0.01" min="0" name="listing_price"></label>
+          <label>Online seit <input type="date" name="listed_date"></label>
+        </div>
+        <div class="row">
+          <label>Verkaufspreis € <input type="number" step="0.01" min="0" name="sold_price"></label>
+          <label>Verkauft am <input type="date" name="sold_date"></label>
+        </div>
+        <div class="row">
+          <label>Plattform <input name="platform" list="dl-platform" placeholder="Vinted, eBay …"></label>
+          <label>Käufer <input name="buyer"></label>
+        </div>
+        <div class="row">
+          <label>Zahlungsart <input name="payment_method" list="dl-payment" placeholder="PayPal, Überweisung …"></label>
+          <label>Zahlungsstatus
+            <select name="payment_status"><option value="offen">Offen</option><option value="bezahlt">Bezahlt</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Gebühren € <input type="number" step="0.01" min="0" name="fees"></label>
+          <label>Versandkosten € <input type="number" step="0.01" min="0" name="shipping_cost"></label>
+        </div>
+        <div class="profit-preview" id="profit-preview"></div>
+      </fieldset>
+    </div>
+    <datalist id="dl-category"></datalist>
+    <datalist id="dl-brand"></datalist>
+    <datalist id="dl-platform"><option>Vinted</option><option>eBay</option><option>Kleinanzeigen</option><option>Depop</option><option>Etsy</option><option>Flohmarkt</option></datalist>
+    <datalist id="dl-payment"><option>PayPal</option><option>Überweisung</option><option>Bar</option><option>Vinted Wallet</option><option>Klarna</option></datalist>
+    <div class="actions">
+      <button type="button" class="danger" id="btn-delete" hidden>Löschen</button>
+      <span class="spacer"></span>
+      <button type="button" id="btn-cancel">Abbrechen</button>
+      <button type="submit" class="primary">Speichern</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Galerie-Großansicht -->
+<dialog id="lightbox">
+  <button type="button" id="lb-close" class="lb-btn lb-x" aria-label="Schließen">×</button>
+  <button type="button" id="lb-prev" class="lb-btn lb-nav lb-l" aria-label="Zurück">‹</button>
+  <img id="lb-img" alt="">
+  <button type="button" id="lb-next" class="lb-btn lb-nav lb-r" aria-label="Weiter">›</button>
+  <div id="lb-count"></div>
+</dialog>
+
+<script src="/vendor/chart.js/chart.umd.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
