@@ -1,7 +1,6 @@
 services:
   reseller:
-    build: .                      # baut das Image aus dem Dockerfile in diesem Ordner
-    image: reseller-dashboard:latest
+    build: .                      # baut das Image lokal aus dem Dockerfile, es wird nichts aus einer Registry gezogen
     container_name: reseller-dashboard
     restart: unless-stopped
     ports:
