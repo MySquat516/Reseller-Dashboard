@@ -90,6 +90,7 @@ function openDialog(item) {
   }
   renderThumbs();
   updateProfit();
+  updateWarnings();
   dlg.showModal();
 }
 
@@ -241,7 +242,14 @@ function updateProfit() {
   const margin = n('sold_price') ? profit / n('sold_price') : 0;
   box.innerHTML = `Gewinn: <strong class="${cls(profit)}">${eur(profit)}</strong> · Marge: ${pct(margin)}`;
 }
-form.addEventListener('input', updateProfit);
+function updateWarnings() {
+  const d = formData();
+  const bad = d.sold_date && d.listed_date && d.sold_date < d.listed_date;
+  const box = $('#date-warning');
+  box.hidden = !bad;
+  if (bad) box.textContent = 'Hinweis: „Verkauft am" liegt vor „Online seit". Speichern klappt, aber die Standzeit wird für diesen Artikel nicht berechnet.';
+}
+form.addEventListener('input', () => { updateProfit(); updateWarnings(); });
 
 // Status automatisch nachziehen, wenn Verkaufspreis eingetragen wird
 form.elements.sold_price.addEventListener('change', () => {
@@ -301,6 +309,22 @@ $('#btn-delete').addEventListener('click', async () => {
 });
 
 // ---------- Dashboard ----------
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* Speicher nicht verfügbar */ } }
+};
+let period = store.get('rd-period', 'all');
+if (!['month', '3m', 'year', 'all'].includes(period)) period = 'all';
+let deadDays = Number(store.get('rd-dead', 60));
+if (![30, 60, 90].includes(deadDays)) deadDays = 60;
+
+const monthDate = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m - 1, 1); };
+const monthLabel = key => monthDate(key).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+const monthLong = key => monthDate(key).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+const sgn = n => (n > 0 ? '+' : '') + eur(n);
+const dateDe = iso => iso.split('-').reverse().join('.');
+const verk = n => `${n} ${n === 1 ? 'Verkauf' : 'Verkäufe'}`;
+
 function kpi(label, value, sub = '', c = '') {
   return `<div class="kpi"><div class="label">${label}</div><div class="value ${c}">${value}</div><div class="sub">${sub}</div></div>`;
 }
@@ -315,30 +339,103 @@ function chart(id, config) {
 
 const PALETTE = ['#5b9dff', '#3ecf8e', '#f5b942', '#ff6b6b', '#b48cff', '#4fd1d9', '#ff9f6b', '#9aa7c2'];
 
-function table(rows, cols) {
+function table(rows, cols, foot) {
   if (!rows.length) return '<p class="empty">Noch keine Daten.</p>';
+  const tfoot = foot
+    ? `<tfoot><tr>${foot.map((c, i) => `<td class="${cols[i].r ? 'r' : ''}">${c}</td>`).join('')}</tr></tfoot>`
+    : '';
   return `<table><thead><tr>${cols.map(c => `<th class="${c.r ? 'r' : ''}">${c.h}</th>`).join('')}</tr></thead><tbody>${
-    rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>${tfoot}</table>`;
 }
 
+function renderMonthCard(tm) {
+  const p = tm.prev;
+  const delta = tm.profit - p.toDate.profit;
+  let cmp;
+  if (!p.full.count) {
+    cmp = '<span class="muted">Kein Vergleich möglich, im Vormonat gab es keine Verkäufe.</span>';
+  } else {
+    const pctTxt = p.toDate.profit > 0 ? ` (${delta >= 0 ? '+' : '−'}${pct(Math.abs(delta) / p.toDate.profit)})` : '';
+    const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '●';
+    cmp = `<span class="${cls(delta)}"><strong>${arrow} ${sgn(delta)}${pctTxt}</strong></span> `
+      + `<span class="muted">gegenüber ${monthLong(p.month)} bis zum ${p.cutoffDay}.</span>`;
+  }
+  $('#month-card').innerHTML = `
+    <div class="mc-main">
+      <div class="mc-title">Gewinn ${monthLong(tm.month)}</div>
+      <div class="mc-value ${cls(tm.profit)}">${eur(tm.profit)}</div>
+      <div class="mc-sub muted">${verk(tm.count)} · Umsatz ${eur(tm.revenue)}</div>
+    </div>
+    <div class="mc-cmp">
+      <div>${cmp}</div>
+      <div class="muted">${monthLong(p.month)} gesamt: ${eur(p.full.profit)} · ${verk(p.full.count)}</div>
+    </div>`;
+}
+
+function renderMonthTable(monthly) {
+  const tot = monthly.reduce((a, m) => ({
+    count: a.count + m.count, revenue: a.revenue + m.revenue,
+    cost: a.cost + m.cost + m.fees, profit: a.profit + m.profit
+  }), { count: 0, revenue: 0, cost: 0, profit: 0 });
+  const cols = [
+    { h: 'Monat', f: r => monthLabel(r.month) },
+    { h: 'Verk.', r: 1, f: r => r.count },
+    { h: 'Umsatz', r: 1, f: r => eur(r.revenue) },
+    { h: 'Kosten', r: 1, f: r => eur(r.cost + r.fees) },
+    { h: 'Gewinn', r: 1, f: r => `<span class="${cls(r.profit)}">${eur(r.profit)}</span>` },
+    { h: 'Marge', r: 1, f: r => (r.revenue ? pct(r.profit / r.revenue) : '–') }
+  ];
+  const foot = ['Summe', tot.count, eur(tot.revenue), eur(tot.cost),
+    `<span class="${cls(tot.profit)}">${eur(tot.profit)}</span>`, tot.revenue ? pct(tot.profit / tot.revenue) : '–'];
+  $('#tbl-monthly').innerHTML = table([...monthly].reverse(), cols, foot);
+}
+
+function syncControls() {
+  document.querySelectorAll('#period button').forEach(b => {
+    const on = b.dataset.period === period;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  $('#dead-days').value = String(deadDays);
+}
+
+$('#period').addEventListener('click', e => {
+  const b = e.target.closest('button[data-period]');
+  if (!b) return;
+  period = b.dataset.period;
+  store.set('rd-period', period);
+  loadStats();
+});
+$('#dead-days').addEventListener('change', e => {
+  deadDays = Number(e.target.value);
+  store.set('rd-dead', String(deadDays));
+  loadStats();
+});
+
 async function loadStats() {
-  const s = await api('/api/stats');
+  syncControls();
+  const s = await api(`/api/stats?period=${period}&dead=${deadDays}`);
   const t = s.totals;
+
+  $('#period-hint').textContent = (s.from ? `Zeitraum: seit ${dateDe(s.from)}. ` : 'Zeitraum: alle Verkäufe. ')
+    + 'Lagerwert, Bestand und Ladenhüter zeigen immer den aktuellen Stand.';
+  renderMonthCard(s.thisMonth);
+
   $('#kpis').innerHTML = [
     kpi('Gewinn', eur(t.profit), `${t.sold} verkauft`, cls(t.profit)),
     kpi('Umsatz', eur(t.revenue), `Kosten ${eur(t.cost)} + Gebühren ${eur(t.fees)}`),
     kpi('Marge', pct(t.margin), `ROI ${pct(t.roi)}`),
     kpi('Ø Gewinn / Artikel', eur(t.avgProfit)),
-    kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft`),
+    kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft, aktuell`),
     kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft'),
     kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)),
-    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt', t.openPayments > 0 ? 'neg' : '')
+    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '')
   ].join('');
 
   chart('ch-monthly', {
     type: 'bar',
     data: {
-      labels: s.monthly.map(m => m.month),
+      labels: s.monthly.map(m => monthLabel(m.month)),
       datasets: [
         { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: PALETTE[0] },
         { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: PALETTE[1] }
@@ -346,6 +443,7 @@ async function loadStats() {
     },
     options: { plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eur(c.parsed.y)}` } } }, scales: { y: { ticks: { callback: v => eur(v) } } } }
   });
+  renderMonthTable(s.monthly);
 
   chart('ch-platform', {
     type: 'bar',
@@ -377,6 +475,10 @@ async function loadStats() {
     { h: 'Marge', r: 1, f: r => pct(r.margin) }
   ]);
 
+  $('#dead-summary').textContent = s.deadTotal
+    ? `${s.deadTotal} ${s.deadTotal === 1 ? 'Artikel' : 'Artikel'} · ${eur(s.deadCapital)} gebunden`
+      + (s.deadTotal > s.deadStock.length ? ` · die ältesten ${s.deadStock.length} werden angezeigt` : '')
+    : '';
   $('#tbl-dead').innerHTML = s.deadStock.length ? table(s.deadStock, [
     { h: 'Artikel', f: r => esc(r.title) },
     { h: 'Tage', r: 1, f: r => r.days },

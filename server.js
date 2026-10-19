@@ -194,25 +194,97 @@ function groupStats(sold, key) {
 
 const dayDiff = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
 
+// Datumshilfen: arbeiten in der Zeitzone des Servers (Umgebungsvariable TZ), nicht in UTC
+const pad = n => String(n).padStart(2, '0');
+const localDay = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const soldDay = it => it.sold_date || (it.created_at || '').slice(0, 10);
+
+const PERIODS = ['month', '3m', 'year', 'all'];
+const DEAD_DAYS = [30, 60, 90];
+
+function periodStart(period, now) {
+  if (period === 'month') return `${monthKey(now)}-01`;
+  if (period === '3m') return `${monthKey(new Date(now.getFullYear(), now.getMonth() - 2, 1))}-01`;
+  if (period === 'year') return `${now.getFullYear()}-01-01`;
+  return null;
+}
+
+const monthSpan = (a, b) =>
+  (Number(b.slice(0, 4)) - Number(a.slice(0, 4))) * 12 + Number(b.slice(5, 7)) - Number(a.slice(5, 7));
+
+function monthRange(fromKey, toKey) {
+  const out = [];
+  let y = Number(fromKey.slice(0, 4));
+  let m = Number(fromKey.slice(5, 7));
+  const ty = Number(toKey.slice(0, 4));
+  const tm = Number(toKey.slice(5, 7));
+  while (y < ty || (y === ty && m <= tm)) {
+    out.push(`${y}-${pad(m)}`);
+    if (++m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+
+const sumUp = list => ({
+  count: list.length,
+  revenue: list.reduce((s, i) => s + i.sold_price, 0),
+  profit: list.reduce((s, i) => s + profitOf(i), 0)
+});
+
 app.get('/api/stats', (req, res) => {
+  const period = PERIODS.includes(req.query.period) ? req.query.period : 'all';
+  const deadDays = DEAD_DAYS.includes(Number(req.query.dead)) ? Number(req.query.dead) : 60;
+  const now = new Date();
+  const today = localDay(now);
+  const from = periodStart(period, now);
+
   const items = db.prepare('SELECT * FROM items').all();
-  const sold = items.filter(i => ['verkauft', 'versendet'].includes(i.status) && i.sold_price != null);
+  const soldAll = items.filter(i => ['verkauft', 'versendet'].includes(i.status) && i.sold_price != null);
+  const sold = from ? soldAll.filter(i => soldDay(i) >= from) : soldAll;
   const unsold = items.filter(i => ['lager', 'online'].includes(i.status));
-  const today = new Date().toISOString().slice(0, 10);
 
   const revenue = sold.reduce((s, i) => s + i.sold_price, 0);
   const cost = sold.reduce((s, i) => s + (i.purchase_price || 0), 0);
   const fees = sold.reduce((s, i) => s + (i.fees || 0) + (i.shipping_cost || 0), 0);
   const profit = revenue - cost - fees;
 
+  // Monatsliste im gewählten Zeitraum, Monate ohne Verkäufe werden mit 0 aufgefüllt
   const monthly = {};
   for (const it of sold) {
-    const m = (it.sold_date || it.created_at || '').slice(0, 7) || 'unbekannt';
-    const g = (monthly[m] ||= { month: m, count: 0, revenue: 0, profit: 0 });
+    const k = soldDay(it).slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(k)) continue;
+    const g = (monthly[k] ||= { month: k, count: 0, revenue: 0, cost: 0, fees: 0, profit: 0 });
     g.count++;
     g.revenue += it.sold_price;
+    g.cost += it.purchase_price || 0;
+    g.fees += (it.fees || 0) + (it.shipping_cost || 0);
     g.profit += profitOf(it);
   }
+  const keys = Object.keys(monthly).sort();
+  const curKey = monthKey(now);
+  const startKey = from ? from.slice(0, 7) : (keys[0] || curKey);
+  const endKey = keys.length && keys[keys.length - 1] > curKey ? keys[keys.length - 1] : curKey;
+  const monthlyList = monthSpan(startKey, endKey) <= 240
+    ? monthRange(startKey, endKey).map(k => monthly[k] || { month: k, count: 0, revenue: 0, cost: 0, fees: 0, profit: 0 })
+    : keys.map(k => monthly[k]);
+
+  // Dieser Monat gegen den Vormonat, fair verglichen bis zum gleichen Tag des Monats
+  const prevKey = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const prevMonthDays = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  const cutoffDay = Math.min(now.getDate(), prevMonthDays);
+  const inMonth = key => soldAll.filter(i => soldDay(i).startsWith(key));
+  const prevAll = inMonth(prevKey);
+  const thisMonth = {
+    month: curKey,
+    ...sumUp(inMonth(curKey)),
+    prev: {
+      month: prevKey,
+      cutoffDay,
+      full: sumUp(prevAll),
+      toDate: sumUp(prevAll.filter(i => Number(soldDay(i).slice(8, 10)) <= cutoffDay))
+    }
+  };
 
   const standtimes = sold
     .filter(i => i.listed_date && i.sold_date)
@@ -221,16 +293,16 @@ app.get('/api/stats', (req, res) => {
 
   const priceDiffs = sold.filter(i => i.listing_price).map(i => i.sold_price - i.listing_price);
 
-  const deadStock = unsold
+  const deadAll = unsold
     .map(i => ({
       id: i.id, title: i.title, status: i.status, purchase_price: i.purchase_price || 0,
       days: dayDiff(i.listed_date || i.purchase_date || i.created_at.slice(0, 10), today)
     }))
-    .filter(i => i.days >= 60)
-    .sort((a, b) => b.days - a.days)
-    .slice(0, 10);
+    .filter(i => i.days >= deadDays)
+    .sort((a, b) => b.days - a.days);
 
   res.json({
+    period, from, deadDays,
     totals: {
       items: items.length,
       sold: sold.length,
@@ -240,17 +312,20 @@ app.get('/api/stats', (req, res) => {
       roi: cost ? profit / cost : 0,
       avgProfit: sold.length ? profit / sold.length : 0,
       stockValue: unsold.reduce((s, i) => s + (i.purchase_price || 0), 0),
-      openPayments: sold.filter(i => i.payment_status !== 'bezahlt').reduce((s, i) => s + i.sold_price, 0),
+      openPayments: soldAll.filter(i => i.payment_status !== 'bezahlt').reduce((s, i) => s + i.sold_price, 0),
       avgStandtime: standtimes.length ? standtimes.reduce((a, b) => a + b, 0) / standtimes.length : null,
       avgPriceDiff: priceDiffs.length ? priceDiffs.reduce((a, b) => a + b, 0) / priceDiffs.length : null
     },
-    monthly: Object.values(monthly).sort((a, b) => a.month.localeCompare(b.month)),
+    thisMonth,
+    monthly: monthlyList,
     byCategory: groupStats(sold, 'category'),
     byBrand: groupStats(sold, 'brand'),
     byPlatform: groupStats(sold, 'platform'),
     byPayment: groupStats(sold, 'payment_method'),
     byStatus: STATUSES.map(s => ({ name: s, count: items.filter(i => i.status === s).length })),
-    deadStock
+    deadStock: deadAll.slice(0, 10),
+    deadTotal: deadAll.length,
+    deadCapital: deadAll.reduce((s, i) => s + i.purchase_price, 0)
   });
 });
 

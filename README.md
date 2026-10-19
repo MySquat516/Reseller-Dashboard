@@ -49,8 +49,13 @@ ungeschützt ins Internet.
 - Status: Lager, Online, Verkauft, Versendet
 - Preise: Einkauf, Einstellpreis, Verkaufspreis, Gebühren, Versandkosten, Daten
 - Verkaufsdetails: Plattform, Käufer, Zahlungsart, Zahlungsstatus
-- Dashboard: Gewinn, Umsatz, Marge, ROI, Lagerwert, Standzeit, Preisabschlag, offene Zahlungen,
-  Auswertung nach Monat, Plattform, Zahlungsart, Kategorie und Marke, Ladenhüter
+- Dashboard mit Zeitraum-Schalter (Dieser Monat, 3 Monate, Dieses Jahr, Alles):
+  Gewinn, Umsatz, Marge, ROI, Standzeit, Preisabschlag, Auswertung nach Plattform, Zahlungsart, Kategorie und Marke
+- Monatskachel: Gewinn des aktuellen Monats im Vergleich zum Vormonat bis zum gleichen Tag
+- Monatsübersicht als Diagramm und Tabelle (inkl. Monate ohne Verkäufe)
+- Immer aktuell, unabhängig vom Zeitraum: Lagerwert, Bestand, offene Zahlungen und Ladenhüter
+  (Grenze wählbar: 30, 60 oder 90 Tage)
+- Formularhinweis, wenn „Verkauft am" vor „Online seit" liegt
 
 ## Hinweis
 

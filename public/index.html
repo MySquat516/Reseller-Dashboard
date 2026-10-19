@@ -17,7 +17,7 @@
 </head>
 <body>
 <header>
-  <h1>📦 Reseller Dashboard</h1>
+  <h1><img class="logo" src="/logo.svg" alt="">Reseller Dashboard</h1>
   <nav>
     <button class="tab active" data-view="dashboard">Dashboard</button>
     <button class="tab" data-view="items">Artikel</button>
@@ -28,15 +28,35 @@
 <main>
   <!-- Dashboard -->
   <section id="view-dashboard">
+    <div class="toolbar">
+      <div class="seg" id="period" role="group" aria-label="Zeitraum">
+        <button type="button" data-period="month">Dieser Monat</button>
+        <button type="button" data-period="3m">3 Monate</button>
+        <button type="button" data-period="year">Dieses Jahr</button>
+        <button type="button" data-period="all">Alles</button>
+      </div>
+      <span class="hint" id="period-hint"></span>
+    </div>
+    <div class="month-card" id="month-card"></div>
     <div class="kpis" id="kpis"></div>
     <div class="grid">
       <div class="card wide"><h3>Umsatz &amp; Gewinn pro Monat</h3><canvas id="ch-monthly"></canvas></div>
+      <div class="card wide"><h3>Monatsübersicht</h3><div id="tbl-monthly" class="scroll-x"></div></div>
       <div class="card"><h3>Gewinn nach Plattform</h3><canvas id="ch-platform"></canvas></div>
       <div class="card"><h3>Zahlungsarten</h3><canvas id="ch-payment"></canvas></div>
       <div class="card"><h3>Marge nach Kategorie</h3><canvas id="ch-category"></canvas></div>
       <div class="card"><h3>Bestand nach Status</h3><canvas id="ch-status"></canvas></div>
       <div class="card"><h3>Marken-Ranking</h3><div id="tbl-brand"></div></div>
-      <div class="card"><h3>Ladenhüter (60+ Tage)</h3><div id="tbl-dead"></div></div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Ladenhüter</h3>
+          <select id="dead-days" aria-label="Ab wie vielen Tagen ein Artikel als Ladenhüter gilt">
+            <option value="30">ab 30 Tagen</option><option value="60">ab 60 Tagen</option><option value="90">ab 90 Tagen</option>
+          </select>
+        </div>
+        <div class="hint" id="dead-summary"></div>
+        <div id="tbl-dead"></div>
+      </div>
     </div>
   </section>
 
@@ -122,6 +142,7 @@
           <label>Gebühren € <input type="number" step="0.01" min="0" name="fees"></label>
           <label>Versandkosten € <input type="number" step="0.01" min="0" name="shipping_cost"></label>
         </div>
+        <div class="warn-box" id="date-warning" hidden></div>
         <div class="profit-preview" id="profit-preview"></div>
       </fieldset>
     </div>
