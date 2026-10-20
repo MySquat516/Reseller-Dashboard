@@ -38,6 +38,8 @@ async function loadItems() {
   fillDatalists();
 }
 
+const STATUS_LABEL = { lager: 'Lager', online: 'Online', reserviert: 'Reserviert', verkauft: 'Zu versenden', versendet: 'Versendet' };
+
 function renderItems() {
   const q = $('#f-search').value.toLowerCase();
   const st = $('#f-status').value;
@@ -48,7 +50,7 @@ function renderItems() {
     <article class="item" data-id="${i.id}">
       <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '📷'}${i.images.length > 1 ? `<span class="count">📷 ${i.images.length}</span>` : ''}</div>
       <div class="body">
-        <span class="badge ${i.status}">${esc(i.status)}</span>
+        <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
         <div class="title">${esc(i.title)}</div>
         <div class="meta">${esc([i.brand, i.size, i.category].filter(Boolean).join(' · '))}</div>
         <div class="price"><span>EK ${eur(i.purchase_price)}</span><span>${i.sold_price != null ? 'VK ' + eur(i.sold_price) : i.listing_price != null ? 'Angebot ' + eur(i.listing_price) : ''}</span></div>
@@ -254,7 +256,7 @@ form.addEventListener('input', () => { updateProfit(); updateWarnings(); });
 // Status automatisch nachziehen, wenn Verkaufspreis eingetragen wird
 form.elements.sold_price.addEventListener('change', () => {
   const s = form.elements.status;
-  if (form.elements.sold_price.value !== '' && ['lager', 'online'].includes(s.value)) {
+  if (form.elements.sold_price.value !== '' && ['lager', 'online', 'reserviert'].includes(s.value)) {
     s.value = 'verkauft';
     if (!form.elements.sold_date.value) form.elements.sold_date.value = new Date().toISOString().slice(0, 10);
   }
@@ -465,7 +467,7 @@ async function loadStats() {
 
   chart('ch-status', {
     type: 'doughnut',
-    data: { labels: s.byStatus.map(x => x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[1], PALETTE[2]], borderWidth: 0 }] }
+    data: { labels: s.byStatus.map(x => STATUS_LABEL[x.name] || x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[1], PALETTE[2], PALETTE[4]], borderWidth: 0 }] }
   });
 
   $('#tbl-brand').innerHTML = table(s.byBrand.slice(0, 8), [

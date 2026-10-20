@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS items (
   category TEXT DEFAULT '',
   brand TEXT DEFAULT '',
   condition TEXT DEFAULT '',
-  status TEXT NOT NULL DEFAULT 'lager',      -- lager | online | verkauft | versendet
+  status TEXT NOT NULL DEFAULT 'lager',      -- lager | online | reserviert | verkauft | versendet
   purchase_price REAL DEFAULT 0,
   purchase_date TEXT,
   listing_price REAL,
@@ -54,7 +54,7 @@ const FIELDS = [
   'payment_status', 'fees', 'shipping_cost', 'notes'
 ];
 const NUMERIC = ['purchase_price', 'listing_price', 'sold_price', 'fees', 'shipping_cost'];
-const STATUSES = ['lager', 'online', 'verkauft', 'versendet'];
+const STATUSES = ['lager', 'online', 'verkauft', 'versendet', 'reserviert'];
 
 function clean(body) {
   const out = {};
@@ -242,7 +242,7 @@ app.get('/api/stats', (req, res) => {
   const items = db.prepare('SELECT * FROM items').all();
   const soldAll = items.filter(i => ['verkauft', 'versendet'].includes(i.status) && i.sold_price != null);
   const sold = from ? soldAll.filter(i => soldDay(i) >= from) : soldAll;
-  const unsold = items.filter(i => ['lager', 'online'].includes(i.status));
+  const unsold = items.filter(i => ['lager', 'online', 'reserviert'].includes(i.status));
 
   const revenue = sold.reduce((s, i) => s + i.sold_price, 0);
   const cost = sold.reduce((s, i) => s + (i.purchase_price || 0), 0);
@@ -294,6 +294,7 @@ app.get('/api/stats', (req, res) => {
   const priceDiffs = sold.filter(i => i.listing_price).map(i => i.sold_price - i.listing_price);
 
   const deadAll = unsold
+    .filter(i => i.status !== 'reserviert') // reservierte Artikel sind so gut wie verkauft
     .map(i => ({
       id: i.id, title: i.title, status: i.status, purchase_price: i.purchase_price || 0,
       days: dayDiff(i.listed_date || i.purchase_date || i.created_at.slice(0, 10), today)
