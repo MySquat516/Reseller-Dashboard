@@ -39,6 +39,12 @@ CREATE TABLE IF NOT EXISTS items (
   notes TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS shipping_presets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  carrier TEXT DEFAULT '',
+  price REAL DEFAULT 0
+);
 CREATE TABLE IF NOT EXISTS images (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
@@ -47,11 +53,17 @@ CREATE TABLE IF NOT EXISTS images (
 );
 `);
 
+// Spalten, die erst später dazukamen: bei bestehenden Datenbanken nachrüsten
+const have = db.prepare('PRAGMA table_info(items)').all().map(c => c.name);
+for (const [col, def] of [['carrier', "TEXT DEFAULT ''"], ['tracking_number', "TEXT DEFAULT ''"]]) {
+  if (!have.includes(col)) db.exec(`ALTER TABLE items ADD COLUMN ${col} ${def}`);
+}
+
 const FIELDS = [
   'title', 'description', 'size', 'category', 'brand', 'condition', 'status',
   'purchase_price', 'purchase_date', 'listing_price', 'listed_date',
   'sold_price', 'sold_date', 'platform', 'buyer', 'payment_method',
-  'payment_status', 'fees', 'shipping_cost', 'notes'
+  'payment_status', 'fees', 'shipping_cost', 'carrier', 'tracking_number', 'notes'
 ];
 const NUMERIC = ['purchase_price', 'listing_price', 'sold_price', 'fees', 'shipping_cost'];
 const STATUSES = ['lager', 'online', 'reserviert', 'zu_versenden', 'versendet', 'verkauft'];
@@ -94,6 +106,34 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
 app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Versandvorlagen (Anbieter + Preis)
+function cleanPreset(b) {
+  const name = String(b.name ?? '').trim().slice(0, 80);
+  const carrier = String(b.carrier ?? '').trim().slice(0, 40);
+  const price = Number(b.price);
+  return { name, carrier, price: Number.isFinite(price) && price >= 0 ? price : 0 };
+}
+app.get('/api/shipping-presets', (req, res) => {
+  res.json(db.prepare('SELECT * FROM shipping_presets ORDER BY name COLLATE NOCASE').all());
+});
+app.post('/api/shipping-presets', (req, res) => {
+  const p = cleanPreset(req.body || {});
+  if (!p.name) return res.status(400).json({ error: 'Name fehlt' });
+  const info = db.prepare('INSERT INTO shipping_presets (name, carrier, price) VALUES (@name, @carrier, @price)').run(p);
+  res.status(201).json({ id: info.lastInsertRowid });
+});
+app.put('/api/shipping-presets/:id', (req, res) => {
+  const p = cleanPreset(req.body || {});
+  if (!p.name) return res.status(400).json({ error: 'Name fehlt' });
+  const info = db.prepare('UPDATE shipping_presets SET name=@name, carrier=@carrier, price=@price WHERE id=@id').run({ ...p, id: req.params.id });
+  if (!info.changes) return res.status(404).json({ error: 'Nicht gefunden' });
+  res.json({ ok: true });
+});
+app.delete('/api/shipping-presets/:id', (req, res) => {
+  db.prepare('DELETE FROM shipping_presets WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
 
 function withImages(items) {
   const imgs = db.prepare('SELECT * FROM images ORDER BY position, id').all();

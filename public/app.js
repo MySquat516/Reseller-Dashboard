@@ -53,6 +53,7 @@ function renderItems() {
         <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
         <div class="title">${esc(i.title)}</div>
         <div class="meta">${esc([i.brand, i.size, i.category].filter(Boolean).join(' · '))}</div>
+        ${i.tracking_number ? `<div class="track">📦 ${esc([i.carrier, i.tracking_number].filter(Boolean).join(' · '))}</div>` : ''}
         <div class="price"><span>EK ${eur(i.purchase_price)}</span><span>${i.sold_price != null ? 'VK ' + eur(i.sold_price) : i.listing_price != null ? 'Angebot ' + eur(i.listing_price) : ''}</span></div>
       </div>
     </article>`).join('') : '<p class="empty">Keine Artikel gefunden.</p>';
@@ -93,6 +94,7 @@ function openDialog(item) {
   renderThumbs();
   updateProfit();
   updateWarnings();
+  updateTrackLink();
   dlg.showModal();
 }
 
@@ -310,6 +312,66 @@ $('#btn-delete').addEventListener('click', async () => {
   if (!$('#view-dashboard').hidden) loadStats();
 });
 
+// ---------- Versand ----------
+const TRACK_URLS = {
+  'dhl': 'https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=',
+  'deutsche post': 'https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=',
+  'dpd': 'https://tracking.dpd.de/parcelstatus?locale=de_DE&query=',
+  'gls': 'https://gls-group.com/DE/de/paketverfolgung?match=',
+  'ups': 'https://www.ups.com/track?tracknum=',
+  'hermes': 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation#'
+};
+function trackUrl(carrier, nr) {
+  const base = TRACK_URLS[(carrier || '').trim().toLowerCase()];
+  nr = (nr || '').trim();
+  return base && nr ? base + encodeURIComponent(nr) : null;
+}
+function updateTrackLink() {
+  const u = trackUrl(form.elements.carrier.value, form.elements.tracking_number.value);
+  const a = $('#track-link');
+  a.hidden = !u;
+  if (u) a.href = u;
+}
+form.elements.carrier.addEventListener('input', updateTrackLink);
+form.elements.tracking_number.addEventListener('input', updateTrackLink);
+
+let presets = [];
+async function loadPresets() {
+  presets = await api('/api/shipping-presets');
+  $('#ship-preset').innerHTML = '<option value="">– wählen –</option>'
+    + presets.map(p => `<option value="${p.id}">${esc(p.name)} (${eur(p.price)})</option>`).join('');
+  $('#ship-list').innerHTML = presets.length ? presets.map(p => `
+    <div class="ship-row"><span class="grow"><strong>${esc(p.name)}</strong> · ${esc(p.carrier || 'kein Anbieter')} · ${eur(p.price)}</span>
+      <button type="button" class="danger" data-del-preset="${p.id}">Löschen</button></div>`).join('')
+    : '<p class="empty">Noch keine Vorlagen.</p>';
+}
+$('#ship-preset').addEventListener('change', e => {
+  const p = presets.find(x => x.id == e.target.value);
+  if (!p) return;
+  form.elements.shipping_cost.value = p.price;
+  if (p.carrier) form.elements.carrier.value = p.carrier;
+  e.target.value = '';
+  updateProfit(); updateTrackLink();
+});
+$('#btn-presets').addEventListener('click', () => $('#dlg-ship').showModal());
+$('#btn-ship-close').addEventListener('click', () => $('#dlg-ship').close());
+$('#ship-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: f.name.value, carrier: f.carrier.value, price: f.price.value }) });
+    f.reset();
+    await loadPresets();
+  } catch (err) { alert('Fehler: ' + err.message); }
+});
+$('#ship-list').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del-preset]');
+  if (!b || !confirm('Vorlage löschen?')) return;
+  await api('/api/shipping-presets/' + b.dataset.delPreset, { method: 'DELETE' });
+  await loadPresets();
+});
+
 // ---------- Dashboard ----------
 const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -489,4 +551,5 @@ async function loadStats() {
 }
 
 // ---------- Start ----------
+loadPresets().catch(() => {});
 loadItems().then(loadStats).catch(err => alert('Fehler beim Laden: ' + err.message));

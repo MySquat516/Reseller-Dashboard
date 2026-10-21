@@ -143,3 +143,11 @@ h1 { display: flex; align-items: center; gap: 10px; }
   .mc-cmp { text-align: left; }
   .mc-value { font-size: 28px; }
 }
+
+/* Versandvorlagen */
+.row3 { display: grid; grid-template-columns: 2fr 1.4fr 1fr auto; gap: 10px; align-items: end; margin-top: 12px; }
+#ship-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.ship-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.ship-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item .track { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+@media (max-width: 640px) { .row3 { grid-template-columns: 1fr 1fr; } .row3 button { grid-column: 1 / -1; } }
