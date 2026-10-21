@@ -38,13 +38,13 @@ async function loadItems() {
   fillDatalists();
 }
 
-const STATUS_LABEL = { lager: 'Lager', online: 'Online', reserviert: 'Reserviert', verkauft: 'Zu versenden', versendet: 'Versendet' };
+const STATUS_LABEL = { lager: 'Lager', online: 'Online', reserviert: 'Reserviert', zu_versenden: 'Noch nicht versendet', versendet: 'Versendet', verkauft: 'Verkauft' };
 
 function renderItems() {
   const q = $('#f-search').value.toLowerCase();
   const st = $('#f-status').value;
   const list = items.filter(i =>
-    (!st || i.status === st) &&
+    (!st || (st === 'aktiv' ? i.status !== 'verkauft' : i.status === st)) &&
     (!q || [i.title, i.brand, i.category, i.description, i.platform].some(x => (x || '').toLowerCase().includes(q))));
   $('#items-list').innerHTML = list.length ? list.map(i => `
     <article class="item" data-id="${i.id}">
@@ -257,7 +257,7 @@ form.addEventListener('input', () => { updateProfit(); updateWarnings(); });
 form.elements.sold_price.addEventListener('change', () => {
   const s = form.elements.status;
   if (form.elements.sold_price.value !== '' && ['lager', 'online', 'reserviert'].includes(s.value)) {
-    s.value = 'verkauft';
+    s.value = 'zu_versenden';
     if (!form.elements.sold_date.value) form.elements.sold_date.value = new Date().toISOString().slice(0, 10);
   }
 });
@@ -467,7 +467,7 @@ async function loadStats() {
 
   chart('ch-status', {
     type: 'doughnut',
-    data: { labels: s.byStatus.map(x => STATUS_LABEL[x.name] || x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[1], PALETTE[2], PALETTE[4]], borderWidth: 0 }] }
+    data: { labels: s.byStatus.map(x => STATUS_LABEL[x.name] || x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[4], PALETTE[5], PALETTE[2], PALETTE[1]], borderWidth: 0 }] }
   });
 
   $('#tbl-brand').innerHTML = table(s.byBrand.slice(0, 8), [

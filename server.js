@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS items (
   category TEXT DEFAULT '',
   brand TEXT DEFAULT '',
   condition TEXT DEFAULT '',
-  status TEXT NOT NULL DEFAULT 'lager',      -- lager | online | reserviert | verkauft | versendet
+  status TEXT NOT NULL DEFAULT 'lager',      -- lager | online | reserviert | zu_versenden | versendet | verkauft (abgeschlossen)
   purchase_price REAL DEFAULT 0,
   purchase_date TEXT,
   listing_price REAL,
@@ -54,7 +54,8 @@ const FIELDS = [
   'payment_status', 'fees', 'shipping_cost', 'notes'
 ];
 const NUMERIC = ['purchase_price', 'listing_price', 'sold_price', 'fees', 'shipping_cost'];
-const STATUSES = ['lager', 'online', 'verkauft', 'versendet', 'reserviert'];
+const STATUSES = ['lager', 'online', 'reserviert', 'zu_versenden', 'versendet', 'verkauft'];
+const SOLD_STATUSES = ['zu_versenden', 'versendet', 'verkauft']; // ab "gekauft" zählt der Artikel als Verkauf
 
 function clean(body) {
   const out = {};
@@ -240,7 +241,7 @@ app.get('/api/stats', (req, res) => {
   const from = periodStart(period, now);
 
   const items = db.prepare('SELECT * FROM items').all();
-  const soldAll = items.filter(i => ['verkauft', 'versendet'].includes(i.status) && i.sold_price != null);
+  const soldAll = items.filter(i => SOLD_STATUSES.includes(i.status) && i.sold_price != null);
   const sold = from ? soldAll.filter(i => soldDay(i) >= from) : soldAll;
   const unsold = items.filter(i => ['lager', 'online', 'reserviert'].includes(i.status));
 

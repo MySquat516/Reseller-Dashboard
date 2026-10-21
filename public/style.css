@@ -74,6 +74,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border); width: fit-content; }
 .badge.lager { color: var(--muted); } .badge.online { color: var(--accent); border-color: var(--accent); }
 .badge.verkauft { color: var(--good); border-color: var(--good); } .badge.versendet { color: var(--warn); border-color: var(--warn); }
+.badge.zu_versenden { color: var(--warn); border-color: var(--warn); border-style: dashed; }
 .badge.reserviert { color: var(--accent2, #b48cff); border-color: var(--accent2, #b48cff); }
 
 dialog { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: min(900px, 96vw); max-height: 94vh; overflow: auto; }
