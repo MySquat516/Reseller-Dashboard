@@ -74,6 +74,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border); width: fit-content; }
 .badge.lager { color: var(--muted); } .badge.online { color: var(--accent); border-color: var(--accent); }
 .badge.verkauft { color: var(--good); border-color: var(--good); } .badge.versendet { color: var(--warn); border-color: var(--warn); }
+.badge.zu_versenden { color: var(--warn); border-color: var(--warn); border-style: dashed; }
+.badge.reserviert { color: var(--accent2, #b48cff); border-color: var(--accent2, #b48cff); }
 
 dialog { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; width: min(900px, 96vw); max-height: 94vh; overflow: auto; }
 dialog::backdrop { background: rgba(0,0,0,.6); }
@@ -112,3 +114,41 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color:
 .profit-preview { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--muted); }
 .actions { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
 .spacer { flex: 1; }
+
+/* Dashboard: Zeitraum, Monatskachel, Monatstabelle */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 8px 14px; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button.active { background: var(--accent); color: #fff; }
+.muted { color: var(--muted); }
+.month-card { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px; }
+.mc-title { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.mc-value { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.mc-sub, .mc-cmp { font-size: 13px; }
+.mc-cmp { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.card-head h3 { margin: 0; }
+.card-head select { width: auto; padding: 4px 8px; }
+.scroll-x { overflow-x: auto; }
+tfoot td { font-weight: 650; border-top: 2px solid var(--border); border-bottom: 0; }
+.warn-box { background: color-mix(in srgb, var(--warn) 16%, transparent); border: 1px solid var(--warn); border-radius: 8px; padding: 8px 10px; font-size: 12px; }
+.warn-box[hidden] { display: none; }
+h1 { display: flex; align-items: center; gap: 10px; }
+.logo { height: 32px; width: auto; }
+@media (max-width: 760px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .seg { display: flex; }
+  .seg button { flex: 1; padding: 8px 4px; font-size: 14px; white-space: nowrap; }
+  .mc-cmp { text-align: left; }
+  .mc-value { font-size: 28px; }
+}
+
+/* Versandvorlagen */
+.row3 { display: grid; grid-template-columns: 2fr 1.4fr 1fr auto; gap: 10px; align-items: end; margin-top: 12px; }
+#ship-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.ship-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.ship-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item .track { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+@media (max-width: 640px) { .row3 { grid-template-columns: 1fr 1fr; } .row3 button { grid-column: 1 / -1; } }
+a.btn { display: inline-flex; align-items: center; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2, var(--surface)); color: var(--text); text-decoration: none; font-size: 14px; }

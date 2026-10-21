@@ -38,19 +38,22 @@ async function loadItems() {
   fillDatalists();
 }
 
+const STATUS_LABEL = { lager: 'Lager', online: 'Online', reserviert: 'Reserviert', zu_versenden: 'Noch nicht versendet', versendet: 'Versendet', verkauft: 'Verkauft' };
+
 function renderItems() {
   const q = $('#f-search').value.toLowerCase();
   const st = $('#f-status').value;
   const list = items.filter(i =>
-    (!st || i.status === st) &&
+    (!st || (st === 'aktiv' ? i.status !== 'verkauft' : i.status === st)) &&
     (!q || [i.title, i.brand, i.category, i.description, i.platform].some(x => (x || '').toLowerCase().includes(q))));
   $('#items-list').innerHTML = list.length ? list.map(i => `
     <article class="item" data-id="${i.id}">
       <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '📷'}${i.images.length > 1 ? `<span class="count">📷 ${i.images.length}</span>` : ''}</div>
       <div class="body">
-        <span class="badge ${i.status}">${esc(i.status)}</span>
+        <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
         <div class="title">${esc(i.title)}</div>
         <div class="meta">${esc([i.brand, i.size, i.category].filter(Boolean).join(' · '))}</div>
+        ${i.tracking_number ? `<div class="track">📦 ${esc([i.carrier, i.tracking_number].filter(Boolean).join(' · '))}</div>` : ''}
         <div class="price"><span>EK ${eur(i.purchase_price)}</span><span>${i.sold_price != null ? 'VK ' + eur(i.sold_price) : i.listing_price != null ? 'Angebot ' + eur(i.listing_price) : ''}</span></div>
       </div>
     </article>`).join('') : '<p class="empty">Keine Artikel gefunden.</p>';
@@ -90,6 +93,8 @@ function openDialog(item) {
   }
   renderThumbs();
   updateProfit();
+  updateWarnings();
+  updateTrackLink();
   dlg.showModal();
 }
 
@@ -241,13 +246,20 @@ function updateProfit() {
   const margin = n('sold_price') ? profit / n('sold_price') : 0;
   box.innerHTML = `Gewinn: <strong class="${cls(profit)}">${eur(profit)}</strong> · Marge: ${pct(margin)}`;
 }
-form.addEventListener('input', updateProfit);
+function updateWarnings() {
+  const d = formData();
+  const bad = d.sold_date && d.listed_date && d.sold_date < d.listed_date;
+  const box = $('#date-warning');
+  box.hidden = !bad;
+  if (bad) box.textContent = 'Hinweis: „Verkauft am" liegt vor „Online seit". Speichern klappt, aber die Standzeit wird für diesen Artikel nicht berechnet.';
+}
+form.addEventListener('input', () => { updateProfit(); updateWarnings(); });
 
 // Status automatisch nachziehen, wenn Verkaufspreis eingetragen wird
 form.elements.sold_price.addEventListener('change', () => {
   const s = form.elements.status;
-  if (form.elements.sold_price.value !== '' && ['lager', 'online'].includes(s.value)) {
-    s.value = 'verkauft';
+  if (form.elements.sold_price.value !== '' && ['lager', 'online', 'reserviert'].includes(s.value)) {
+    s.value = 'zu_versenden';
     if (!form.elements.sold_date.value) form.elements.sold_date.value = new Date().toISOString().slice(0, 10);
   }
 });
@@ -300,7 +312,83 @@ $('#btn-delete').addEventListener('click', async () => {
   if (!$('#view-dashboard').hidden) loadStats();
 });
 
+// ---------- Versand ----------
+const TRACK_URLS = {
+  'dhl': 'https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=',
+  'deutsche post': 'https://www.dhl.de/de/privatkunden/pakete-empfangen/verfolgen.html?piececode=',
+  'dpd': 'https://tracking.dpd.de/parcelstatus?locale=de_DE&query=',
+  'gls': 'https://gls-group.com/DE/de/paketverfolgung?match=',
+  'ups': 'https://www.ups.com/track?tracknum=',
+  'hermes': 'https://www.myhermes.de/empfangen/sendungsverfolgung/sendungsinformation#'
+};
+function trackUrl(carrier, nr) {
+  const base = TRACK_URLS[(carrier || '').trim().toLowerCase()];
+  nr = (nr || '').trim();
+  return base && nr ? base + encodeURIComponent(nr) : null;
+}
+function updateTrackLink() {
+  const u = trackUrl(form.elements.carrier.value, form.elements.tracking_number.value);
+  const a = $('#track-link');
+  a.hidden = !u;
+  if (u) a.href = u;
+}
+form.elements.carrier.addEventListener('input', updateTrackLink);
+form.elements.tracking_number.addEventListener('input', updateTrackLink);
+
+let presets = [];
+async function loadPresets() {
+  presets = await api('/api/shipping-presets');
+  $('#ship-preset').innerHTML = '<option value="">– wählen –</option>'
+    + presets.map(p => `<option value="${p.id}">${esc(p.name)} (${eur(p.price)})</option>`).join('');
+  $('#ship-list').innerHTML = presets.length ? presets.map(p => `
+    <div class="ship-row"><span class="grow"><strong>${esc(p.name)}</strong> · ${esc(p.carrier || 'kein Anbieter')} · ${eur(p.price)}</span>
+      <button type="button" class="danger" data-del-preset="${p.id}">Löschen</button></div>`).join('')
+    : '<p class="empty">Noch keine Vorlagen.</p>';
+}
+$('#ship-preset').addEventListener('change', e => {
+  const p = presets.find(x => x.id == e.target.value);
+  if (!p) return;
+  form.elements.shipping_cost.value = p.price;
+  if (p.carrier) form.elements.carrier.value = p.carrier;
+  e.target.value = '';
+  updateProfit(); updateTrackLink();
+});
+$('#btn-presets').addEventListener('click', () => $('#dlg-ship').showModal());
+$('#btn-ship-close').addEventListener('click', () => $('#dlg-ship').close());
+$('#ship-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: f.name.value, carrier: f.carrier.value, price: f.price.value }) });
+    f.reset();
+    await loadPresets();
+  } catch (err) { alert('Fehler: ' + err.message); }
+});
+$('#ship-list').addEventListener('click', async e => {
+  const b = e.target.closest('[data-del-preset]');
+  if (!b || !confirm('Vorlage löschen?')) return;
+  await api('/api/shipping-presets/' + b.dataset.delPreset, { method: 'DELETE' });
+  await loadPresets();
+});
+
 // ---------- Dashboard ----------
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* Speicher nicht verfügbar */ } }
+};
+let period = store.get('rd-period', 'all');
+if (!['month', '3m', 'year', 'all'].includes(period)) period = 'all';
+let deadDays = Number(store.get('rd-dead', 60));
+if (![30, 60, 90].includes(deadDays)) deadDays = 60;
+
+const monthDate = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m - 1, 1); };
+const monthLabel = key => monthDate(key).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
+const monthLong = key => monthDate(key).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+const sgn = n => (n > 0 ? '+' : '') + eur(n);
+const dateDe = iso => iso.split('-').reverse().join('.');
+const verk = n => `${n} ${n === 1 ? 'Verkauf' : 'Verkäufe'}`;
+
 function kpi(label, value, sub = '', c = '') {
   return `<div class="kpi"><div class="label">${label}</div><div class="value ${c}">${value}</div><div class="sub">${sub}</div></div>`;
 }
@@ -315,30 +403,103 @@ function chart(id, config) {
 
 const PALETTE = ['#5b9dff', '#3ecf8e', '#f5b942', '#ff6b6b', '#b48cff', '#4fd1d9', '#ff9f6b', '#9aa7c2'];
 
-function table(rows, cols) {
+function table(rows, cols, foot) {
   if (!rows.length) return '<p class="empty">Noch keine Daten.</p>';
+  const tfoot = foot
+    ? `<tfoot><tr>${foot.map((c, i) => `<td class="${cols[i].r ? 'r' : ''}">${c}</td>`).join('')}</tr></tfoot>`
+    : '';
   return `<table><thead><tr>${cols.map(c => `<th class="${c.r ? 'r' : ''}">${c.h}</th>`).join('')}</tr></thead><tbody>${
-    rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>${tfoot}</table>`;
 }
 
+function renderMonthCard(tm) {
+  const p = tm.prev;
+  const delta = tm.profit - p.toDate.profit;
+  let cmp;
+  if (!p.full.count) {
+    cmp = '<span class="muted">Kein Vergleich möglich, im Vormonat gab es keine Verkäufe.</span>';
+  } else {
+    const pctTxt = p.toDate.profit > 0 ? ` (${delta >= 0 ? '+' : '−'}${pct(Math.abs(delta) / p.toDate.profit)})` : '';
+    const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '●';
+    cmp = `<span class="${cls(delta)}"><strong>${arrow} ${sgn(delta)}${pctTxt}</strong></span> `
+      + `<span class="muted">gegenüber ${monthLong(p.month)} bis zum ${p.cutoffDay}.</span>`;
+  }
+  $('#month-card').innerHTML = `
+    <div class="mc-main">
+      <div class="mc-title">Gewinn ${monthLong(tm.month)}</div>
+      <div class="mc-value ${cls(tm.profit)}">${eur(tm.profit)}</div>
+      <div class="mc-sub muted">${verk(tm.count)} · Umsatz ${eur(tm.revenue)}</div>
+    </div>
+    <div class="mc-cmp">
+      <div>${cmp}</div>
+      <div class="muted">${monthLong(p.month)} gesamt: ${eur(p.full.profit)} · ${verk(p.full.count)}</div>
+    </div>`;
+}
+
+function renderMonthTable(monthly) {
+  const tot = monthly.reduce((a, m) => ({
+    count: a.count + m.count, revenue: a.revenue + m.revenue,
+    cost: a.cost + m.cost + m.fees, profit: a.profit + m.profit
+  }), { count: 0, revenue: 0, cost: 0, profit: 0 });
+  const cols = [
+    { h: 'Monat', f: r => monthLabel(r.month) },
+    { h: 'Verk.', r: 1, f: r => r.count },
+    { h: 'Umsatz', r: 1, f: r => eur(r.revenue) },
+    { h: 'Kosten', r: 1, f: r => eur(r.cost + r.fees) },
+    { h: 'Gewinn', r: 1, f: r => `<span class="${cls(r.profit)}">${eur(r.profit)}</span>` },
+    { h: 'Marge', r: 1, f: r => (r.revenue ? pct(r.profit / r.revenue) : '–') }
+  ];
+  const foot = ['Summe', tot.count, eur(tot.revenue), eur(tot.cost),
+    `<span class="${cls(tot.profit)}">${eur(tot.profit)}</span>`, tot.revenue ? pct(tot.profit / tot.revenue) : '–'];
+  $('#tbl-monthly').innerHTML = table([...monthly].reverse(), cols, foot);
+}
+
+function syncControls() {
+  document.querySelectorAll('#period button').forEach(b => {
+    const on = b.dataset.period === period;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  $('#dead-days').value = String(deadDays);
+}
+
+$('#period').addEventListener('click', e => {
+  const b = e.target.closest('button[data-period]');
+  if (!b) return;
+  period = b.dataset.period;
+  store.set('rd-period', period);
+  loadStats();
+});
+$('#dead-days').addEventListener('change', e => {
+  deadDays = Number(e.target.value);
+  store.set('rd-dead', String(deadDays));
+  loadStats();
+});
+
 async function loadStats() {
-  const s = await api('/api/stats');
+  syncControls();
+  const s = await api(`/api/stats?period=${period}&dead=${deadDays}`);
   const t = s.totals;
+
+  $('#period-hint').textContent = (s.from ? `Zeitraum: seit ${dateDe(s.from)}. ` : 'Zeitraum: alle Verkäufe. ')
+    + 'Lagerwert, Bestand und Ladenhüter zeigen immer den aktuellen Stand.';
+  renderMonthCard(s.thisMonth);
+
   $('#kpis').innerHTML = [
     kpi('Gewinn', eur(t.profit), `${t.sold} verkauft`, cls(t.profit)),
     kpi('Umsatz', eur(t.revenue), `Kosten ${eur(t.cost)} + Gebühren ${eur(t.fees)}`),
     kpi('Marge', pct(t.margin), `ROI ${pct(t.roi)}`),
     kpi('Ø Gewinn / Artikel', eur(t.avgProfit)),
-    kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft`),
+    kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft, aktuell`),
     kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft'),
     kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)),
-    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt', t.openPayments > 0 ? 'neg' : '')
+    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '')
   ].join('');
 
   chart('ch-monthly', {
     type: 'bar',
     data: {
-      labels: s.monthly.map(m => m.month),
+      labels: s.monthly.map(m => monthLabel(m.month)),
       datasets: [
         { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: PALETTE[0] },
         { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: PALETTE[1] }
@@ -346,6 +507,7 @@ async function loadStats() {
     },
     options: { plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eur(c.parsed.y)}` } } }, scales: { y: { ticks: { callback: v => eur(v) } } } }
   });
+  renderMonthTable(s.monthly);
 
   chart('ch-platform', {
     type: 'bar',
@@ -367,7 +529,7 @@ async function loadStats() {
 
   chart('ch-status', {
     type: 'doughnut',
-    data: { labels: s.byStatus.map(x => x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[1], PALETTE[2]], borderWidth: 0 }] }
+    data: { labels: s.byStatus.map(x => STATUS_LABEL[x.name] || x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[4], PALETTE[5], PALETTE[2], PALETTE[1]], borderWidth: 0 }] }
   });
 
   $('#tbl-brand').innerHTML = table(s.byBrand.slice(0, 8), [
@@ -377,6 +539,10 @@ async function loadStats() {
     { h: 'Marge', r: 1, f: r => pct(r.margin) }
   ]);
 
+  $('#dead-summary').textContent = s.deadTotal
+    ? `${s.deadTotal} ${s.deadTotal === 1 ? 'Artikel' : 'Artikel'} · ${eur(s.deadCapital)} gebunden`
+      + (s.deadTotal > s.deadStock.length ? ` · die ältesten ${s.deadStock.length} werden angezeigt` : '')
+    : '';
   $('#tbl-dead').innerHTML = s.deadStock.length ? table(s.deadStock, [
     { h: 'Artikel', f: r => esc(r.title) },
     { h: 'Tage', r: 1, f: r => r.days },
@@ -385,4 +551,5 @@ async function loadStats() {
 }
 
 // ---------- Start ----------
+loadPresets().catch(() => {});
 loadItems().then(loadStats).catch(err => alert('Fehler beim Laden: ' + err.message));

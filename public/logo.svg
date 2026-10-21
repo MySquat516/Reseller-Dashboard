@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="98 68 330 364" width="330" height="364">
+<polygon points="147.75,252.5 256,190 223.092,119 114.842,181.5" fill="#ecdab2" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="256,190 364.25,252.5 397.158,181.5 288.908,119" fill="#dfc99b" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="147.75,252.5 256,190 256,315" fill="#a98750" stroke="#8a6b3a" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="256,190 364.25,252.5 256,315" fill="#8f6f3d" stroke="#8a6b3a" stroke-width="0" stroke-linejoin="round"/>
+<polygon points="256,315 364.25,252.5 256,190 147.75,252.5" fill="none" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+<g transform="translate(256 330) rotate(-16)">
+  <rect x="-46" y="-250" width="92" height="250" rx="7" fill="#6dbf86" stroke="#2f7d4a" stroke-width="4"/>
+  <rect x="-37" y="-241" width="74" height="232" rx="4" fill="none" stroke="#b0e2bf" stroke-width="3"/>
+  <circle cx="-28" cy="-224" r="5" fill="#b0e2bf"/><circle cx="28" cy="-224" r="5" fill="#b0e2bf"/>
+  <circle cx="0" cy="-165" r="26" fill="#b0e2bf" stroke="#2f7d4a" stroke-width="3"/>
+  <g transform="translate(2.5 -165)" fill="none" stroke="#2f7d4a" stroke-width="4.5" stroke-linecap="round">
+    <path d="M 9 -11 A 13 13 0 1 0 9 11"/><path d="M -14 -4 H 6 M -14 4 H 6"/>
+  </g>
+</g>
+<g transform="translate(256 330) rotate(16)">
+  <rect x="-46" y="-250" width="92" height="250" rx="7" fill="#5fb479" stroke="#2f7d4a" stroke-width="4"/>
+  <rect x="-37" y="-241" width="74" height="232" rx="4" fill="none" stroke="#a6dcb6" stroke-width="3"/>
+  <circle cx="-28" cy="-224" r="5" fill="#a6dcb6"/><circle cx="28" cy="-224" r="5" fill="#a6dcb6"/>
+  <circle cx="0" cy="-165" r="26" fill="#a6dcb6" stroke="#2f7d4a" stroke-width="3"/>
+  <g transform="translate(2.5 -165)" fill="none" stroke="#2f7d4a" stroke-width="4.5" stroke-linecap="round">
+    <path d="M 9 -11 A 13 13 0 1 0 9 11"/><path d="M -14 -4 H 6 M -14 4 H 6"/>
+  </g>
+</g>
+<g transform="translate(256 330) rotate(0)">
+  <rect x="-46" y="-250" width="92" height="250" rx="7" fill="#7fd096" stroke="#2f7d4a" stroke-width="4"/>
+  <rect x="-37" y="-241" width="74" height="232" rx="4" fill="none" stroke="#bdebc9" stroke-width="3"/>
+  <circle cx="-28" cy="-224" r="5" fill="#bdebc9"/><circle cx="28" cy="-224" r="5" fill="#bdebc9"/>
+  <circle cx="0" cy="-165" r="26" fill="#bdebc9" stroke="#2f7d4a" stroke-width="3"/>
+  <g transform="translate(2.5 -165)" fill="none" stroke="#2f7d4a" stroke-width="4.5" stroke-linecap="round">
+    <path d="M 9 -11 A 13 13 0 1 0 9 11"/><path d="M -14 -4 H 6 M -14 4 H 6"/>
+  </g>
+</g>
+<polygon points="147.75,357.5 256,420 256,315 147.75,252.5" fill="#d9be8a" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="256,420 364.25,357.5 364.25,252.5 256,315" fill="#c6a66e" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="279.815,391.55 333.94,360.3 333.94,320.4 279.815,351.65" fill="#f1e6c8" stroke="#a98750" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="288.475" y1="359.25" x2="320.95" y2="340.5" stroke="#b79a64" stroke-width="3" stroke-linecap="round"/>
+<line x1="288.475" y1="369.75" x2="310.125" y2="357.25" stroke="#b79a64" stroke-width="3" stroke-linecap="round"/>
+<polygon points="147.75,252.5 256,315 221.36,349 113.11,286.5" fill="#eedcb4" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+<polygon points="256,315 364.25,252.5 398.89,286.5 290.64,349" fill="#e4d0a4" stroke="#8a6b3a" stroke-width="4" stroke-linejoin="round"/>
+</svg>

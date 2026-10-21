@@ -1,6 +1,8 @@
 services:
   reseller:
-    build: .                      # baut das Image lokal aus dem Dockerfile, es wird nichts aus einer Registry gezogen
+    build:
+      context: .
+      network: host               # <--- Zwingt den Build, dein echtes Internet/DNS zu nutzen
     container_name: reseller-dashboard
     restart: unless-stopped
     ports:
