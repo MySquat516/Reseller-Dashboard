@@ -151,3 +151,4 @@ h1 { display: flex; align-items: center; gap: 10px; }
 .ship-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .item .track { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
 @media (max-width: 640px) { .row3 { grid-template-columns: 1fr 1fr; } .row3 button { grid-column: 1 / -1; } }
+a.btn { display: inline-flex; align-items: center; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2, var(--surface)); color: var(--text); text-decoration: none; font-size: 14px; }

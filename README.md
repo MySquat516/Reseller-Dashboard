@@ -7,6 +7,9 @@ Stack: Node.js, Express, SQLite (better-sqlite3), Chart.js, Vanilla-JS-Frontend.
 > Idee, Anforderungen und Tests kommen vom Projektinhaber, der Code wurde KI-gestützt geschrieben.
 > Bitte vor dem produktiven Einsatz selbst prüfen.
 
+- CSV-Export aller Artikel (Excel-tauglich) über den Button in der Artikelliste
+- Versand: Anbieter, Sendungsnummer mit Tracking-Link, Versandvorlagen (Anbieter + Preis)
+
 ## Starten mit Docker
 
 ```bash

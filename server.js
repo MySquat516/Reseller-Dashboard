@@ -216,6 +216,37 @@ app.put('/api/items/:id/images/order', (req, res) => {
 });
 
 // ---------- Statistik ----------
+// CSV-Export für Excel (Deutschland): UTF-8 mit BOM, Semikolon, Dezimalkomma
+const CSV_COLS = [
+  ['ID', 'id'], ['Titel', 'title'], ['Beschreibung', 'description'], ['Größe', 'size'], ['Kategorie', 'category'],
+  ['Marke', 'brand'], ['Zustand', 'condition'], ['Status', 'status'],
+  ['Einkaufspreis', 'purchase_price', 'n'], ['Gekauft am', 'purchase_date'], ['Einstellpreis', 'listing_price', 'n'],
+  ['Online seit', 'listed_date'], ['Verkaufspreis', 'sold_price', 'n'], ['Verkauft am', 'sold_date'],
+  ['Plattform', 'platform'], ['Käufer', 'buyer'], ['Zahlungsart', 'payment_method'], ['Zahlungsstatus', 'payment_status'],
+  ['Gebühren', 'fees', 'n'], ['Versandkosten', 'shipping_cost', 'n'], ['Gewinn', '_profit', 'n'],
+  ['Versandanbieter', 'carrier'], ['Sendungsnummer', 'tracking_number'], ['Notizen', 'notes'], ['Bilder', '_images']
+];
+function csvCell(v, numeric) {
+  if (v == null || v === '') return '';
+  if (numeric) return Number(v).toFixed(2).replace('.', ',');
+  let s = String(v).replace(/\r?\n/g, ' ');
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // verhindert Formel-Ausführung in Excel
+  return /[;"]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+app.get('/api/export.csv', (req, res) => {
+  const items = db.prepare('SELECT * FROM items ORDER BY id').all();
+  const counts = Object.fromEntries(db.prepare('SELECT item_id, COUNT(*) c FROM images GROUP BY item_id').all().map(r => [r.item_id, r.c]));
+  const lines = [CSV_COLS.map(c => c[0]).join(';')];
+  for (const it of items) {
+    const row = { ...it, _images: counts[it.id] || 0, _profit: it.sold_price != null ? profitOf(it) : null };
+    lines.push(CSV_COLS.map(([, k, t]) => csvCell(row[k], t === 'n')).join(';'));
+  }
+  const day = new Date();
+  const name = `reseller-export-${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}.csv`;
+  res.set({ 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${name}"` });
+  res.send('\uFEFF' + lines.join('\r\n') + '\r\n');
+});
+
 const profitOf = it =>
   (it.sold_price || 0) - (it.purchase_price || 0) - (it.fees || 0) - (it.shipping_cost || 0);
 
