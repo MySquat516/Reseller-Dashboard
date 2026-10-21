@@ -7,6 +7,14 @@ Stack: Node.js, Express, SQLite (better-sqlite3), Chart.js, Vanilla-JS-Frontend.
 > Idee, Anforderungen und Tests kommen vom Projektinhaber, der Code wurde KI-gestützt geschrieben.
 > Bitte vor dem produktiven Einsatz selbst prüfen.
 
+## Oberfläche
+
+Beispieldaten, keine echten Artikel.
+
+![Dashboard mit Gewinn, Monatsvergleich, Auswertungen und Ladenhütern](docs/screenshots/dashboard.png)
+
+![Artikelliste mit Status, Bildern und CSV-Export](docs/screenshots/artikel.png)
+
 ## Starten mit Docker
 
 ```bash
