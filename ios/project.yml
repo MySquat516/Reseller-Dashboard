@@ -1,0 +1,69 @@
+# XcodeGen-Konfiguration. Erzeugt ResellerApp.xcodeproj:  xcodegen generate
+name: ResellerApp
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    # DEVELOPMENT_TEAM bewusst leer: in Xcode unter Signing & Capabilities das eigene Team wählen.
+targets:
+  ResellerApp:
+    type: application
+    platform: iOS
+    sources:
+      - ResellerApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.ResellerApp   # bitte auf etwas Eigenes ändern, z. B. de.deinname.reseller
+        TARGETED_DEVICE_FAMILY: "1,2"                          # iPhone und iPad
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    info:
+      path: ResellerApp/Info.plist
+      properties:
+        CFBundleDisplayName: Reseller
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # Der Server läuft im Heimnetz über HTTP (Zugriff per VPN). Für den Eigengebrauch ist das erlaubt.
+        # Vor einer Veröffentlichung auf HTTPS umstellen und diese Ausnahme entfernen.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        NSLocalNetworkUsageDescription: Die App verbindet sich mit deinem Reseller-Dashboard-Server im Heimnetz.
+  ResellerAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ResellerAppTests
+    dependencies:
+      - target: ResellerApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.ResellerAppTests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  ResellerApp:
+    build:
+      targets:
+        ResellerApp: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ResellerAppTests
