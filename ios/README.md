@@ -66,7 +66,7 @@ einstellen. Zusätzlich in den Target-Einstellungen unter **Info**:
 ios/
 ├── project.yml              XcodeGen-Konfiguration
 ├── ResellerApp/
-│   ├── ResellerApp.swift    App-Einstieg
+│   ├── ResellerApp.swift    App-Einstieg (ResellerAppMain)
 │   ├── Models/              Item, ItemStatus, ItemInput (JSON ↔ Swift)
 │   ├── Services/            APIClient (REST), ItemStore (Zustand)
 │   ├── Support/             Zahlen-, Währungs- und Datumshilfen

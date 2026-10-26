@@ -13,6 +13,8 @@ final class ItemStore {
 
     private(set) var client: APIClient?
 
+    nonisolated init() {}
+
     func configure(serverURL: String) {
         let url = APIClient.normalize(serverURL)
         guard url?.absoluteString != client?.baseURL.absoluteString else { return }

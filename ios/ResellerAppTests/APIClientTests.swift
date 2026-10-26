@@ -12,16 +12,10 @@ final class StubURLProtocol: URLProtocol {
 
     override func startLoading() {
         Self.lastRequest = request
-        Self.lastBody = request.httpBody ?? request.httpBodyStream.flatMap { stream in
-            stream.open(); defer { stream.close() }
-            var data = Data()
-            var buffer = [UInt8](repeating: 0, count: 4096)
-            while stream.hasBytesAvailable {
-                let n = stream.read(&buffer, maxLength: buffer.count)
-                if n <= 0 { break }
-                data.append(buffer, count: n)
-            }
-            return data
+        if let body = request.httpBody {
+            Self.lastBody = body
+        } else if let stream = request.httpBodyStream {
+            Self.lastBody = Self.readAll(stream)
         }
         let (status, data) = Self.handler?(request) ?? (500, Data())
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!
@@ -31,6 +25,19 @@ final class StubURLProtocol: URLProtocol {
     }
 
     override func stopLoading() {}
+
+    private static func readAll(_ stream: InputStream) -> Data {
+        stream.open()
+        defer { stream.close() }
+        var data = Data()
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        while stream.hasBytesAvailable {
+            let count = stream.read(&buffer, maxLength: buffer.count)
+            if count <= 0 { break }
+            data.append(buffer, count: count)
+        }
+        return data
+    }
 }
 
 final class APIClientTests: XCTestCase {
