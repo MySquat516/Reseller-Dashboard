@@ -87,9 +87,14 @@
 </main>
 
 <!-- Formular-Dialog -->
-<dialog id="dlg">
+<dialog id="dlg" aria-labelledby="dlg-title">
   <form id="form" method="dialog">
-    <h2 id="dlg-title">Neuer Artikel</h2>
+    <div class="dlg-bar">
+      <button type="button" id="btn-cancel" class="cancel">Abbrechen</button>
+      <h2 id="dlg-title">Neuer Artikel</h2>
+      <button type="submit" class="primary save">Speichern</button>
+    </div>
+    <div class="dlg-body">
     <div class="cols">
       <fieldset>
         <legend>Artikel</legend>
@@ -118,7 +123,8 @@
         </label>
         <label>Notizen <textarea name="notes" rows="2"></textarea></label>
         <div id="dropzone" class="dropzone" tabindex="0" role="button">
-          📷 Bilder hierher ziehen, einfügen (Strg+V) oder tippen zum Auswählen
+          <span class="dz-desktop">📷 Bilder hierher ziehen, einfügen (Strg+V) oder klicken zum Auswählen</span>
+          <span class="dz-touch">📷 Fotos hinzufügen</span>
           <small>Mehrere gleichzeitig möglich, bis zu 60 pro Artikel. Große Fotos werden automatisch verkleinert.</small>
         </div>
         <input type="file" id="files" accept="image/*" multiple hidden>
@@ -129,15 +135,18 @@
       <fieldset>
         <legend>Preise &amp; Verkauf</legend>
         <div class="row">
-          <label>Einkaufspreis € <input type="number" step="0.01" min="0" name="purchase_price"></label>
+          <label>Einkaufspreis € <input type="number" inputmode="decimal" step="0.01" min="0" name="purchase_price"></label>
           <label>Gekauft am <input type="date" name="purchase_date"></label>
         </div>
         <div class="row">
-          <label>Einstellpreis € <input type="number" step="0.01" min="0" name="listing_price"></label>
+          <label>Einstellpreis € <input type="number" inputmode="decimal" step="0.01" min="0" name="listing_price"></label>
           <label>Online seit <input type="date" name="listed_date"></label>
         </div>
+        <details id="sale-details" class="sale">
+        <summary>Verkauf &amp; Versand</summary>
+        <div class="sale-fields">
         <div class="row">
-          <label>Verkaufspreis € <input type="number" step="0.01" min="0" name="sold_price"></label>
+          <label>Verkaufspreis €<input type="number" inputmode="decimal" step="0.01" min="0" name="sold_price"></label>
           <label>Verkauft am <input type="date" name="sold_date"></label>
         </div>
         <div class="row">
@@ -151,8 +160,8 @@
           </label>
         </div>
         <div class="row">
-          <label>Gebühren € <input type="number" step="0.01" min="0" name="fees"></label>
-          <label>Versandkosten € <input type="number" step="0.01" min="0" name="shipping_cost"></label>
+          <label>Gebühren € <input type="number" inputmode="decimal" step="0.01" min="0" name="fees"></label>
+          <label>Versandkosten € <input type="number" inputmode="decimal" step="0.01" min="0" name="shipping_cost"></label>
         </div>
         <div class="row">
           <label>Versandvorlage
@@ -167,6 +176,8 @@
         <a id="track-link" class="hint" target="_blank" rel="noopener noreferrer" hidden>Sendung verfolgen ↗</a>
         <div class="warn-box" id="date-warning" hidden></div>
         <div class="profit-preview" id="profit-preview"></div>
+        </div>
+        </details>
       </fieldset>
     </div>
     <datalist id="dl-category"></datalist>
@@ -174,11 +185,7 @@
     <datalist id="dl-platform"><option>Vinted</option><option>eBay</option><option>Kleinanzeigen</option><option>Depop</option><option>Etsy</option><option>Flohmarkt</option></datalist>
     <datalist id="dl-carrier"><option>DHL</option><option>Deutsche Post</option><option>Hermes</option><option>DPD</option><option>GLS</option><option>UPS</option></datalist>
     <datalist id="dl-payment"><option>PayPal</option><option>Überweisung</option><option>Bar</option><option>Vinted Wallet</option><option>Klarna</option></datalist>
-    <div class="actions">
-      <button type="button" class="danger" id="btn-delete" hidden>Löschen</button>
-      <span class="spacer"></span>
-      <button type="button" id="btn-cancel">Abbrechen</button>
-      <button type="submit" class="primary">Speichern</button>
+    <button type="button" class="danger dlg-delete" id="btn-delete" hidden>Artikel löschen</button>
     </div>
   </form>
 </dialog>
@@ -191,7 +198,7 @@
   <form id="ship-form" class="row3">
     <label>Name <input name="name" required maxlength="80" placeholder="z. B. DHL Paket S"></label>
     <label>Anbieter <input name="carrier" list="dl-carrier" maxlength="40"></label>
-    <label>Preis € <input name="price" type="number" step="0.01" min="0" required></label>
+    <label>Preis € <input name="price" type="number" inputmode="decimal" step="0.01" min="0" required></label>
     <button class="primary" type="submit">Hinzufügen</button>
   </form>
   <div class="actions"><span class="spacer"></span><button type="button" id="btn-ship-close">Schließen</button></div>

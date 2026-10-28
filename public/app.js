@@ -88,7 +88,7 @@ function openDialog(item) {
   gallery = (item?.images || []).map(i => ({ id: i.id, url: i.url }));
   removedIds = [];
   form.reset();
-  $('#dlg-title').textContent = item ? 'Artikel bearbeiten' : 'Neuer Artikel';
+  $('#dlg-title').textContent = item ? 'Bearbeiten' : 'Neuer Artikel';
   $('#btn-delete').hidden = !item;
   if (item) {
     for (const el of form.elements) {
@@ -99,8 +99,19 @@ function openDialog(item) {
   updateProfit();
   updateWarnings();
   updateTrackLink();
+  $('#sale-details').open = false;
+  syncSaleDetails();
   dlg.showModal();
+  dlg.scrollTop = 0;
 }
+
+// „Verkauf & Versand" bleibt zu, solange der Artikel noch nicht reserviert oder verkauft ist
+const SALE_STATES = ['reserviert', 'zu_versenden', 'versendet', 'verkauft'];
+function syncSaleDetails() {
+  const f = form.elements;
+  if (SALE_STATES.includes(f.status.value) || f.sold_price.value !== '') $('#sale-details').open = true;
+}
+form.elements.status.addEventListener('change', syncSaleDetails);
 
 const MAX_IMAGES = 60;
 
