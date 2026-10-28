@@ -25,7 +25,11 @@ document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => showView(b.dataset.view)));
 
 function showView(v) {
-  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  document.querySelectorAll('.tab').forEach(b => {
+    const on = b.dataset.view === v;
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
   $('#view-dashboard').hidden = v !== 'dashboard';
   $('#view-items').hidden = v !== 'items';
   if (v === 'dashboard') loadStats();

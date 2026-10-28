@@ -18,11 +18,17 @@
 <body>
 <header>
   <h1><img class="logo" src="/logo.svg" alt="">Reseller Dashboard</h1>
-  <nav>
-    <button class="tab active" data-view="dashboard">Dashboard</button>
-    <button class="tab" data-view="items">Artikel</button>
-    <button class="primary" id="btn-new">+ Neuer Artikel</button>
+  <nav aria-label="Bereiche">
+    <button class="tab active" data-view="dashboard" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="tab" data-view="items">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
+      <span>Artikel</span>
+    </button>
   </nav>
+  <button class="primary" id="btn-new" aria-label="Neuer Artikel"><span class="plus" aria-hidden="true">+</span><span class="lbl">+ Neuer Artikel</span></button>
 </header>
 
 <main>
