@@ -32,8 +32,9 @@
 </header>
 
 <main>
+  <div class="banner error" id="load-error" role="alert" hidden><span class="msg grow"></span><button type="button" id="load-retry">Erneut versuchen</button></div>
   <!-- Dashboard -->
-  <section id="view-dashboard">
+  <section id="view-dashboard" aria-busy="true">
     <div class="toolbar">
       <div class="seg" id="period" role="group" aria-label="Zeitraum">
         <button type="button" data-period="month">Dieser Monat</button>
@@ -43,16 +44,16 @@
       </div>
       <span class="hint" id="period-hint"></span>
     </div>
-    <div class="month-card" id="month-card"></div>
-    <div class="kpis" id="kpis"></div>
+    <div class="month-card" id="month-card" aria-hidden="true"><div class="skel" style="width:170px;height:60px"></div><div class="skel" style="width:230px;height:40px"></div></div>
+    <div class="kpis" id="kpis" aria-hidden="true"><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div><div class="kpi"><div class="skel" style="width:60%;height:12px"></div><div class="skel" style="width:80%;height:28px;margin-top:10px"></div><div class="skel" style="width:50%;height:10px;margin-top:8px"></div></div></div>
     <div class="grid">
       <div class="card wide"><h3>Umsatz &amp; Gewinn pro Monat</h3><canvas id="ch-monthly"></canvas></div>
-      <div class="card wide"><h3>Monatsübersicht</h3><div id="tbl-monthly" class="scroll-x"></div></div>
+      <div class="card wide"><h3>Monatsübersicht</h3><div id="tbl-monthly" class="scroll-x"><div class="skel-lines"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></div></div>
       <div class="card"><h3>Gewinn nach Plattform</h3><canvas id="ch-platform"></canvas></div>
       <div class="card"><h3>Zahlungsarten</h3><canvas id="ch-payment"></canvas></div>
       <div class="card"><h3>Marge nach Kategorie</h3><canvas id="ch-category"></canvas></div>
       <div class="card"><h3>Bestand nach Status</h3><canvas id="ch-status"></canvas></div>
-      <div class="card"><h3>Marken-Ranking</h3><div id="tbl-brand"></div></div>
+      <div class="card"><h3>Marken-Ranking</h3><div id="tbl-brand"><div class="skel-lines"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></div></div>
       <div class="card">
         <div class="card-head">
           <h3>Ladenhüter</h3>
@@ -61,7 +62,7 @@
           </select>
         </div>
         <div class="hint" id="dead-summary"></div>
-        <div id="tbl-dead"></div>
+        <div id="tbl-dead"><div class="skel-lines"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></div>
       </div>
     </div>
   </section>
@@ -82,7 +83,7 @@
         <option value="verkauft">Verkauft (abgeschlossen)</option>
       </select>
     </div>
-    <div id="items-list" class="items"></div>
+    <div id="items-list" class="items" aria-busy="true"><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article></div>
   </section>
 </main>
 
@@ -93,6 +94,7 @@
       <button type="button" id="btn-cancel" class="cancel">Abbrechen</button>
       <h2 id="dlg-title">Neuer Artikel</h2>
       <button type="submit" class="primary save">Speichern</button>
+      <div class="banner error" id="form-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
     </div>
     <div class="dlg-body">
     <div class="cols">
@@ -194,6 +196,7 @@
 <dialog id="dlg-ship">
   <h2>Versandvorlagen</h2>
   <p class="hint">Eine Vorlage füllt im Artikel Anbieter und Versandkosten aus. Preise trägst du selbst ein, damit sie nie veralten.</p>
+  <div class="banner error" id="ship-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
   <div id="ship-list"></div>
   <form id="ship-form" class="row3">
     <label>Name <input name="name" required maxlength="80" placeholder="z. B. DHL Paket S"></label>
@@ -202,6 +205,17 @@
     <button class="primary" type="submit">Hinzufügen</button>
   </form>
   <div class="actions"><span class="spacer"></span><button type="button" id="btn-ship-close">Schließen</button></div>
+</dialog>
+
+<!-- Löschen bestätigen -->
+<dialog id="dlg-confirm" aria-labelledby="cf-title" aria-describedby="cf-text">
+  <h2 id="cf-title"></h2>
+  <p id="cf-text"></p>
+  <div class="actions">
+    <span class="spacer"></span>
+    <button type="button" id="cf-cancel">Abbrechen</button>
+    <button type="button" class="danger" id="cf-ok"></button>
+  </div>
 </dialog>
 
 <!-- Galerie-Großansicht -->

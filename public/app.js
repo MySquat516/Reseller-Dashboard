@@ -11,8 +11,39 @@ let editing = null;      // Artikel-Objekt oder null
 let gallery = [];        // Bilder im Dialog in Reihenfolge: {id,url} (gespeichert) oder {file,url} (neu)
 let removedIds = [];     // gespeicherte Bilder, die beim Speichern gelöscht werden
 
+// ---------- Meldungen (statt alert/confirm) ----------
+function showMsg(id, text, kind = 'error') {
+  const el = $('#' + id);
+  el.classList.toggle('info', kind === 'info');
+  el.querySelector('.msg').textContent = text;
+  el.hidden = false;
+}
+const hideMsg = id => { $('#' + id).hidden = true; };
+document.addEventListener('click', e => {
+  const c = e.target.closest('.banner-close');
+  if (c) c.closest('.banner').hidden = true;
+});
+
+// Eigener Bestätigungsdialog für Unumkehrbares; Abbrechen ist vorausgewählt
+function confirmDialog({ title, text, ok }) {
+  const d = $('#dlg-confirm');
+  $('#cf-title').textContent = title;
+  $('#cf-text').textContent = text;
+  $('#cf-ok').textContent = ok;
+  return new Promise(resolve => {
+    d.returnValue = 'cancel';
+    const done = () => { d.removeEventListener('close', done); resolve(d.returnValue === 'ok'); };
+    d.addEventListener('close', done);
+    d.showModal();
+    $('#cf-cancel').focus();
+  });
+}
+$('#cf-ok').addEventListener('click', () => $('#dlg-confirm').close('ok'));
+$('#cf-cancel').addEventListener('click', () => $('#dlg-confirm').close('cancel'));
+
 async function api(url, opts = {}) {
-  const res = await fetch(url, opts);
+  let res;
+  try { res = await fetch(url, opts); } catch { throw new Error('Keine Verbindung zum Server'); }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || res.statusText);
@@ -38,6 +69,7 @@ function showView(v) {
 // ---------- Artikelliste ----------
 async function loadItems() {
   items = await api('/api/items');
+  $('#items-list').setAttribute('aria-busy', 'false');
   renderItems();
   fillDatalists();
 }
@@ -73,7 +105,7 @@ $('#f-search').addEventListener('input', renderItems);
 $('#f-status').addEventListener('change', renderItems);
 $('#items-list').addEventListener('click', e => {
   const el = e.target.closest('.item');
-  if (el) openDialog(items.find(i => i.id == el.dataset.id));
+  if (el && el.dataset.id) openDialog(items.find(i => i.id == el.dataset.id));
 });
 
 // ---------- Dialog ----------
@@ -99,6 +131,7 @@ function openDialog(item) {
   updateProfit();
   updateWarnings();
   updateTrackLink();
+  hideMsg('form-error');
   $('#sale-details').open = false;
   syncSaleDetails();
   dlg.showModal();
@@ -130,7 +163,7 @@ function renderThumbs() {
 function addFiles(files) {
   const imgs = [...files].filter(f => f.type.startsWith('image/'));
   const room = MAX_IMAGES - gallery.length;
-  if (imgs.length > room) alert(`Maximal ${MAX_IMAGES} Bilder pro Artikel – ${imgs.length - Math.max(room, 0)} Bild(er) wurden nicht übernommen.`);
+  if (imgs.length > room) showMsg('form-error', `Maximal ${MAX_IMAGES} Bilder pro Artikel – ${imgs.length - Math.max(room, 0)} Bild(er) wurden nicht übernommen.`, 'info');
   for (const f of imgs.slice(0, Math.max(room, 0))) gallery.push({ file: f, url: URL.createObjectURL(f) });
   renderThumbs();
 }
@@ -285,6 +318,7 @@ form.addEventListener('submit', async e => {
   const btn = form.querySelector('button[type=submit]');
   const json = { 'Content-Type': 'application/json' };
   btn.disabled = true;
+  hideMsg('form-error');
   try {
     let id = editing?.id;
     if (id) await api('/api/items/' + id, { method: 'PUT', headers: json, body: JSON.stringify(body) });
@@ -312,7 +346,7 @@ form.addEventListener('submit', async e => {
     await loadItems();
     if (!$('#view-dashboard').hidden) loadStats();
   } catch (err) {
-    alert('Fehler beim Speichern: ' + err.message);
+    showMsg('form-error', 'Speichern fehlgeschlagen: ' + err.message + '. Bitte versuch es noch einmal.');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Speichern';
@@ -320,11 +354,23 @@ form.addEventListener('submit', async e => {
 });
 
 $('#btn-delete').addEventListener('click', async () => {
-  if (!editing || !confirm(`„${editing.title}" wirklich löschen?`)) return;
-  await api('/api/items/' + editing.id, { method: 'DELETE' });
-  dlg.close();
-  await loadItems();
-  if (!$('#view-dashboard').hidden) loadStats();
+  if (!editing) return;
+  const n = gallery.length;
+  const what = n ? `Der Artikel und ${n === 1 ? 'sein Bild werden' : `seine ${n} Bilder werden`}` : 'Der Artikel wird';
+  const ok = await confirmDialog({
+    title: `„${editing.title}" löschen?`,
+    text: `${what} dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.`,
+    ok: 'Artikel löschen'
+  });
+  if (!ok) return;
+  try {
+    await api('/api/items/' + editing.id, { method: 'DELETE' });
+    dlg.close();
+    await loadItems();
+    if (!$('#view-dashboard').hidden) loadStats();
+  } catch (err) {
+    showMsg('form-error', 'Löschen fehlgeschlagen: ' + err.message);
+  }
 });
 
 // ---------- Versand ----------
@@ -373,18 +419,37 @@ $('#btn-ship-close').addEventListener('click', () => $('#dlg-ship').close());
 $('#ship-form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
+  hideMsg('ship-error');
   try {
     await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: f.name.value, carrier: f.carrier.value, price: f.price.value }) });
     f.reset();
     await loadPresets();
-  } catch (err) { alert('Fehler: ' + err.message); }
+  } catch (err) { showMsg('ship-error', 'Vorlage konnte nicht gespeichert werden: ' + err.message); }
 });
+// Löschen ist hier schnell wieder gut zu machen: kein Dialog, dafür „Rückgängig“ in der Zeile
+const deletedPresets = new Map();
 $('#ship-list').addEventListener('click', async e => {
-  const b = e.target.closest('[data-del-preset]');
-  if (!b || !confirm('Vorlage löschen?')) return;
-  await api('/api/shipping-presets/' + b.dataset.delPreset, { method: 'DELETE' });
-  await loadPresets();
+  const del = e.target.closest('[data-del-preset]');
+  const undo = e.target.closest('[data-undo-preset]');
+  hideMsg('ship-error');
+  try {
+    if (del) {
+      const p = presets.find(x => x.id == del.dataset.delPreset);
+      await api('/api/shipping-presets/' + del.dataset.delPreset, { method: 'DELETE' });
+      if (p) deletedPresets.set(String(p.id), p);
+      const row = del.closest('.ship-row');
+      row.classList.add('undo');
+      row.innerHTML = `<span class="grow">„${esc(p?.name || 'Vorlage')}“ gelöscht</span><button type="button" data-undo-preset="${p?.id}">Rückgängig</button>`;
+    } else if (undo) {
+      const p = deletedPresets.get(undo.dataset.undoPreset);
+      if (!p) return;
+      await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: p.name, carrier: p.carrier, price: p.price }) });
+      deletedPresets.delete(undo.dataset.undoPreset);
+      await loadPresets();
+    }
+  } catch (err) { showMsg('ship-error', 'Das hat nicht geklappt: ' + err.message); }
 });
 
 // ---------- Dashboard ----------
@@ -491,7 +556,7 @@ $('#dead-days').addEventListener('change', e => {
   loadStats();
 });
 
-async function loadStats() {
+async function renderStats() {
   syncControls();
   const s = await api(`/api/stats?period=${period}&dead=${deadDays}`);
   const t = s.totals;
@@ -565,6 +630,38 @@ async function loadStats() {
   ]) : '<p class="empty">Keine Ladenhüter 🎉</p>';
 }
 
+// Während des Ladens bleibt der alte Stand sichtbar (gedimmt), statt zu verschwinden
+async function loadStats() {
+  const view = $('#view-dashboard');
+  view.setAttribute('aria-busy', 'true');
+  try {
+    await renderStats();
+    view.classList.add('loaded');
+    view.classList.remove('failed');
+    hideMsg('load-error');
+  } catch (err) {
+    view.classList.add('failed');   // Platzhalter nicht endlos weiter schimmern lassen
+    showLoadError(err, loadStats);
+  } finally {
+    view.setAttribute('aria-busy', 'false');
+  }
+}
+
+function showLoadError(err, retry) {
+  showMsg('load-error', 'Daten konnten nicht geladen werden: ' + err.message);
+  $('#load-retry').onclick = () => { hideMsg('load-error'); retry(); };
+}
+
 // ---------- Start ----------
-loadPresets().catch(() => {});
-loadItems().then(loadStats).catch(err => alert('Fehler beim Laden: ' + err.message));
+function start() {
+  loadPresets().catch(() => {});
+  return loadItems().then(loadStats).catch(err => {
+    const list = $('#items-list');
+    list.setAttribute('aria-busy', 'false');
+    if (list.querySelector('.skel-item')) list.innerHTML = '';
+    $('#view-dashboard').classList.add('failed');
+    $('#view-dashboard').setAttribute('aria-busy', 'false');
+    showLoadError(err, start);
+  });
+}
+start();

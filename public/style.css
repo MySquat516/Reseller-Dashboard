@@ -240,3 +240,41 @@ details.sale > summary:focus-visible { outline: 2px solid var(--accent); outline
   .dlg-bar { padding-top: calc(8px + env(safe-area-inset-top)); }
   .dlg-body { padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); }
 }
+
+/* Meldungen direkt im Kontext statt alert() (HIG alerts.md, feedback.md) */
+.banner {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 12px;
+  border: 1px solid var(--bad); border-radius: 8px; font-size: 14px; color: var(--text);
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+}
+.banner::before { content: '⚠'; flex: none; }
+.banner.info { border-color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent); }
+.banner.info::before { content: 'ℹ'; }
+.banner[hidden] { display: none; }
+.banner .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.banner button { flex: none; }
+.banner-close { padding: 4px 10px; font-size: 18px; line-height: 1; background: transparent; border-color: transparent; }
+.dlg-bar .banner { grid-column: 1 / -1; margin: 4px 0 0; }
+#dlg-ship .banner { margin: 10px 0 0; }
+#dlg-confirm { width: min(420px, 92vw); }
+#dlg-confirm h2 { font-size: 17px; margin: 0 0 8px; }
+#dlg-confirm p { margin: 0; color: var(--muted); }
+.ship-row.undo { border-style: dashed; color: var(--muted); }
+
+/* Ladezustand: Platzhalter statt leerer Seite (HIG loading.md) */
+.skel, .item .img.skel {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 6px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+.skel-lines { display: grid; gap: 10px; }
+.skel-lines .skel { height: 16px; }
+.skel-lines .skel:nth-child(2n) { width: 85%; }
+.skel-item { pointer-events: none; }
+.skel-item .body .skel { display: block; }
+#view-dashboard.loaded[aria-busy="true"] :is(.month-card, .kpis, .grid) { opacity: .55; transition: opacity .15s; }
+@media (prefers-reduced-motion: reduce) {
+  .skel, .item .img.skel { animation: none; }
+  #view-dashboard.loaded[aria-busy="true"] :is(.month-card, .kpis, .grid) { transition: none; }
+}
+#view-dashboard.failed:not(.loaded) :is(.month-card, .kpis, .grid) { display: none; }
