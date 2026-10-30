@@ -293,3 +293,13 @@ select { max-width: 100%; }
 .card { overflow-x: auto; }
 input, select, textarea { min-width: 0; max-width: 100%; }
 .filters input { min-width: 0; }
+
+/* Zeitraum-Hinweis hinter ⓘ, weniger Kennzahlen auf dem Handy */
+.info-btn { border: 0; background: transparent; color: var(--muted); font-size: 1.1rem; line-height: 1; padding: 6px 10px; min-width: 44px; min-height: 44px; }
+#period-hint { flex-basis: 100%; margin: 0; }
+.kpi-toggle { display: none; }
+@media (max-width: 760px) {
+  .kpi-toggle { display: block; width: 100%; margin: -4px 0 16px; background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+  .kpis:not(.expanded) .kpi-extra { display: none; }
+}
+@media (max-width: 760px) { .info-btn { align-self: flex-start; margin-left: -10px; } }

@@ -573,6 +573,16 @@ $('#dead-days').addEventListener('change', e => {
   loadStats();
 });
 
+$('#kpi-toggle').addEventListener('click', () => {
+  const open = $('#kpis').classList.toggle('expanded');
+  $('#kpi-toggle').setAttribute('aria-expanded', open);
+  $('#kpi-toggle').textContent = open ? 'Weniger Kennzahlen' : 'Mehr Kennzahlen';
+});
+$('#period-info').addEventListener('click', () => {
+  const p = $('#period-hint'); p.hidden = !p.hidden;
+  $('#period-info').setAttribute('aria-expanded', String(!p.hidden));
+});
+
 async function renderStats() {
   syncControls();
   const s = await api(`/api/stats?period=${period}&dead=${deadDays}`);
@@ -582,15 +592,16 @@ async function renderStats() {
     + 'Lagerwert, Bestand und Ladenhüter zeigen immer den aktuellen Stand.';
   renderMonthCard(s.thisMonth);
 
+  // Auf dem Handy nur die wichtigsten Kennzahlen, der Rest hinter „Mehr Kennzahlen“ (Klasse kpi-extra)
   $('#kpis').innerHTML = [
     kpi('Gewinn', eur(t.profit), `${t.sold} verkauft`, cls(t.profit)),
     kpi('Umsatz', eur(t.revenue), `Kosten ${eur(t.cost)} + Gebühren ${eur(t.fees)}`),
     kpi('Marge', pct(t.margin), `ROI ${pct(t.roi)}`),
-    kpi('Ø Gewinn / Artikel', eur(t.avgProfit)),
     kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft, aktuell`),
-    kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft'),
-    kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)),
-    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '')
+    kpi('Ø Gewinn / Artikel', eur(t.avgProfit)).replace('class="kpi"', 'class="kpi kpi-extra"'),
+    kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft').replace('class="kpi"', 'class="kpi kpi-extra"'),
+    kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)).replace('class="kpi"', 'class="kpi kpi-extra"'),
+    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '').replace('class="kpi"', t.openPayments > 0 ? 'class="kpi"' : 'class="kpi kpi-extra"')
   ].join('');
 
   // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
