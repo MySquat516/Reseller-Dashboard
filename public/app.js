@@ -83,7 +83,7 @@ function renderItems() {
     (!st || (st === 'aktiv' ? i.status !== 'verkauft' : i.status === st)) &&
     (!q || [i.title, i.brand, i.category, i.description, i.platform].some(x => (x || '').toLowerCase().includes(q))));
   $('#items-list').innerHTML = list.length ? list.map(i => `
-    <article class="item" data-id="${i.id}">
+    <article class="item" data-id="${i.id}" tabindex="0" role="button">
       <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '📷'}${i.images.length > 1 ? `<span class="count">📷 ${i.images.length}</span>` : ''}</div>
       <div class="body">
         <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
@@ -103,6 +103,13 @@ function fillDatalists() {
 
 $('#f-search').addEventListener('input', renderItems);
 $('#f-status').addEventListener('change', renderItems);
+$('#items-list').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('.item[data-id]');
+  if (!el || e.target !== el) return;
+  e.preventDefault();
+  openDialog(items.find(i => i.id == el.dataset.id));
+});
 $('#items-list').addEventListener('click', e => {
   const el = e.target.closest('.item');
   if (el && el.dataset.id) openDialog(items.find(i => i.id == el.dataset.id));
@@ -473,15 +480,25 @@ function kpi(label, value, sub = '', c = '') {
   return `<div class="kpi"><div class="label">${label}</div><div class="value ${c}">${value}</div><div class="sub">${sub}</div></div>`;
 }
 
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
 function chart(id, config) {
   charts[id]?.destroy();
-  const css = getComputedStyle(document.documentElement);
-  Chart.defaults.color = css.getPropertyValue('--muted').trim();
-  Chart.defaults.borderColor = css.getPropertyValue('--border').trim();
+  Chart.defaults.color = cssVar('--muted');
+  Chart.defaults.borderColor = cssVar('--border');
+  // Chart-Text skaliert mit der Systemschrift (rem-Basis), mindestens 12 px
+  Chart.defaults.font.size = Math.max(12, Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.76));
+  if (reduceMotion) Chart.defaults.animation = false;
   charts[id] = new Chart($('#' + id), config);
 }
 
-const PALETTE = ['#5b9dff', '#3ecf8e', '#f5b942', '#ff6b6b', '#b48cff', '#4fd1d9', '#ff9f6b', '#9aa7c2'];
+// Screenreader: Das Canvas ist ein Bild, also bekommt es eine Textfassung der Kernwerte
+function describe(id, title, parts) {
+  const el = $('#' + id);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', parts.length ? `${title}: ${parts.slice(0, 8).join('; ')}` : `${title}: keine Daten`);
+}
 
 function table(rows, cols, foot) {
   if (!rows.length) return '<p class="empty">Noch keine Daten.</p>';
@@ -576,41 +593,53 @@ async function renderStats() {
     kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '')
   ].join('');
 
+  // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
+  const C = { revenue: cssVar('--accent'), profit: cssVar('--good'), count: cssVar('--muted') };
+
   chart('ch-monthly', {
     type: 'bar',
     data: {
       labels: s.monthly.map(m => monthLabel(m.month)),
       datasets: [
-        { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: PALETTE[0] },
-        { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: PALETTE[1] }
+        { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: C.revenue },
+        { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: C.profit }
       ]
     },
     options: { plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eur(c.parsed.y)}` } } }, scales: { y: { ticks: { callback: v => eur(v) } } } }
   });
+  const lastM = s.monthly[s.monthly.length - 1];
+  describe('ch-monthly', 'Balkendiagramm Umsatz und Gewinn pro Monat', lastM
+    ? [`${monthLong(lastM.month)}: Umsatz ${eur(lastM.revenue)}, Gewinn ${eur(lastM.profit)}`, `${s.monthly.length} Monate insgesamt, alle Werte stehen in der Monatsübersicht`] : []);
   renderMonthTable(s.monthly);
 
   chart('ch-platform', {
     type: 'bar',
-    data: { labels: s.byPlatform.map(p => p.name), datasets: [{ label: 'Gewinn', data: s.byPlatform.map(p => p.profit), backgroundColor: PALETTE[0] }] },
+    data: { labels: s.byPlatform.map(p => p.name), datasets: [{ label: 'Gewinn', data: s.byPlatform.map(p => p.profit), backgroundColor: C.profit }] },
     options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => eur(c.parsed.x) + ` (${s.byPlatform[c.dataIndex].count} Verk.)` } } } }
   });
+  describe('ch-platform', 'Gewinn nach Plattform', s.byPlatform.map(p => `${p.name} ${eur(p.profit)}`));
 
   chart('ch-payment', {
-    type: 'doughnut',
-    data: { labels: s.byPayment.map(p => p.name), datasets: [{ data: s.byPayment.map(p => p.count), backgroundColor: PALETTE, borderWidth: 0 }] },
-    options: { plugins: { tooltip: { callbacks: { label: c => `${c.label}: ${c.parsed} Verkäufe (${eur(s.byPayment[c.dataIndex].revenue)})` } } } }
+    type: 'bar',
+    data: { labels: s.byPayment.map(p => p.name), datasets: [{ label: 'Verkäufe', data: s.byPayment.map(p => p.count), backgroundColor: C.count }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${verk(c.parsed.x)} (${eur(s.byPayment[c.dataIndex].revenue)})` } } }, scales: { x: { ticks: { precision: 0 } } } }
   });
+  describe('ch-payment', 'Zahlungsarten', s.byPayment.map(p => `${p.name} ${verk(p.count)}`));
 
   chart('ch-category', {
     type: 'bar',
-    data: { labels: s.byCategory.map(c => c.name), datasets: [{ label: 'Marge', data: s.byCategory.map(c => c.margin * 100), backgroundColor: PALETTE[2] }] },
+    data: { labels: s.byCategory.map(c => c.name), datasets: [{ label: 'Marge', data: s.byCategory.map(c => c.margin * 100), backgroundColor: C.profit }] },
     options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => pct(c.parsed.y / 100) } } }, scales: { y: { ticks: { callback: v => v + ' %' } } } }
   });
+  describe('ch-category', 'Marge nach Kategorie', s.byCategory.map(c => `${c.name} ${pct(c.margin)}`));
 
+  const statusName = x => STATUS_LABEL[x.name] || x.name;
   chart('ch-status', {
-    type: 'doughnut',
-    data: { labels: s.byStatus.map(x => STATUS_LABEL[x.name] || x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[4], PALETTE[5], PALETTE[2], PALETTE[1]], borderWidth: 0 }] }
+    type: 'bar',
+    data: { labels: s.byStatus.map(statusName), datasets: [{ label: 'Artikel', data: s.byStatus.map(x => x.count), backgroundColor: C.count }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.x} Artikel` } } }, scales: { x: { ticks: { precision: 0 } } } }
   });
+  describe('ch-status', 'Bestand nach Status', s.byStatus.map(x => `${statusName(x)} ${x.count}`));
 
   $('#tbl-brand').innerHTML = table(s.byBrand.slice(0, 8), [
     { h: 'Marke', f: r => esc(r.name) },
