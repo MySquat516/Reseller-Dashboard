@@ -368,3 +368,16 @@ a.btn.primary { background: var(--accent); border-color: var(--accent); color: v
 
 #card-security p { margin: 0 0 10px; }
 #card-security code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: .92em; }
+
+/* CSV-Export-Dialog */
+#dlg-csv { width: min(460px, 96vw); }
+.csv-form { display: grid; gap: 12px; margin: 12px 0 4px; }
+a.btn.disabled { opacity: .5; pointer-events: none; }
+#csv-custom[hidden], #csv-by-wrap[hidden] { display: none; }
+#dlg-csv .actions .btn, #dlg-csv .actions button { white-space: nowrap; }
+@media (max-width: 420px) {
+  /* Schmale Displays: Herunterladen oben und volle Breite, Abbrechen darunter */
+  #dlg-csv .actions { flex-direction: column-reverse; align-items: stretch; }
+  #dlg-csv .actions .spacer { display: none; }
+  #dlg-csv .actions .btn, #dlg-csv .actions button { display: flex; align-items: center; justify-content: center; text-align: center; }
+}
