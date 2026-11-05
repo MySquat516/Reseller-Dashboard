@@ -17,6 +17,36 @@ Beispieldaten, keine echten Artikel.
 
 ## Starten mit Docker
 
+### Fertiges Image (empfohlen)
+
+GitHub baut das Image bei jedem Push auf `main` automatisch (`.github/workflows/docker.yml`) und legt es
+unter `ghcr.io/mysquat516/reseller-dashboard:latest` ab (für `amd64` und `arm64`). Auf dem Server wird dann
+nichts mehr gebaut:
+
+```bash
+docker compose pull      # neues Image holen
+docker compose up -d     # Container neu starten
+```
+
+Update = nur diese zwei Befehle, die Dateien müssen nicht mehr aktualisiert werden. Einzig die
+`docker-compose.yml` braucht der Server einmalig.
+
+**Zugriff auf das Image:** Ist das Repo privat, ist das Image es auch. Der Server meldet sich dann einmal an:
+
+```bash
+docker login ghcr.io -u <github-benutzername>
+```
+
+Als Passwort dient ein *Personal Access Token (classic)* mit dem Recht `read:packages`
+(GitHub → Settings → Developer settings → Personal access tokens). Alternativ lässt sich das Paket auf GitHub
+unter *Packages → reseller-dashboard → Package settings* auf „Public“ stellen, dann ist kein Login nötig
+(der Code der App steckt dann allerdings im öffentlichen Image).
+
+Das Image erscheint erst nach dem ersten Push auf `main`. Außerdem gibt es pro Build den Tag `sha-<commit>`,
+damit sich ein älterer Stand wiederherstellen lässt (`image: …:sha-abc1234`).
+
+### Selbst bauen
+
 ```bash
 docker compose up -d --build
 ```
@@ -24,10 +54,10 @@ docker compose up -d --build
 Danach erreichbar unter `http://<server>:3000`.
 
 Der Build läuft mit `network: host` (siehe `docker-compose.yml`), damit `npm install` im Docker-Build
-auch bei DNS-Problemen im Heimnetz funktioniert. Es wird kein fertiges Image aus einer Registry geladen,
-das Image wird lokal aus dem `Dockerfile` gebaut.
+auch bei DNS-Problemen im Heimnetz funktioniert. Beim Selbstbauen wird das Image lokal aus dem `Dockerfile` erzeugt
+und unter demselben Namen wie das fertige Image abgelegt.
 
-**Update:** neuen Stand holen (`git pull` oder neues ZIP entpacken, den Ordner `data` behalten) und
+**Update beim Selbstbauen:** neuen Stand holen (`git pull` oder neues ZIP entpacken, den Ordner `data` behalten) und
 `docker compose up -d --build` ausführen. Neue Datenbankspalten werden beim Start automatisch ergänzt.
 
 Alle Daten (Datenbank `reseller.db` und Bilder in `uploads/`) liegen im Ordner `./data`.
