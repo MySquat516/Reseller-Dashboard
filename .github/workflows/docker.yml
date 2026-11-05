@@ -12,7 +12,8 @@ on:
       - Dockerfile
       - package.json
       - package-lock.json
-      - server.js
+      - '*.js'
+      - docker-entrypoint.sh
       - public/**
       - .github/workflows/docker.yml
   workflow_dispatch:
