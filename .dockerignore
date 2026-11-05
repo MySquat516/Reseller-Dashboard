@@ -1,4 +1,7 @@
 node_modules
 data
 .git
+.github
+ios
+docs
 README.md

@@ -1,4 +1,9 @@
 const $ = (s, el = document) => el.querySelector(s);
+// Heutiges Datum in lokaler Zeit (toISOString() liefert UTC und ist nach Mitternacht noch "gestern")
+const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const eur = n => (n == null ? '–' : n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }));
 const pct = n => (n == null ? '–' : (n * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %');
 const num1 = n => (n == null ? '–' : n.toLocaleString('de-DE', { maximumFractionDigits: 1 }));
@@ -44,6 +49,10 @@ $('#cf-cancel').addEventListener('click', () => $('#dlg-confirm').close('cancel'
 async function api(url, opts = {}) {
   let res;
   try { res = await fetch(url, opts); } catch { throw new Error('Keine Verbindung zum Server'); }
+  if (res.status === 401) {   // Sitzung abgelaufen oder Passwortschutz neu eingeschaltet
+    location.replace('/login?next=' + encodeURIComponent(location.pathname));
+    throw new Error('Nicht angemeldet');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || res.statusText);
@@ -64,8 +73,11 @@ function showView(v) {
   $('#view-dashboard').hidden = v !== 'dashboard';
   $('#view-sales').hidden = v !== 'sales';
   $('#view-items').hidden = v !== 'items';
+  $('#view-settings').hidden = v !== 'settings';
+  document.body.dataset.view = v;
   if (v === 'dashboard') loadStats();
   if (v === 'sales') loadSales();
+  if (v === 'settings') { renderSettingsView(); loadBackups(); loadSession(); }
 }
 
 // Nach dem Speichern oder Löschen die gerade sichtbare Auswertung neu laden
@@ -361,7 +373,7 @@ form.elements.sold_price.addEventListener('change', () => {
   const s = form.elements.status;
   if (form.elements.sold_price.value !== '' && ['lager', 'online', 'reserviert'].includes(s.value)) {
     s.value = 'zu_versenden';
-    if (!form.elements.sold_date.value) form.elements.sold_date.value = new Date().toISOString().slice(0, 10);
+    if (!form.elements.sold_date.value) form.elements.sold_date.value = todayLocal();
   }
 });
 
@@ -473,12 +485,29 @@ form.elements.tracking_number.addEventListener('input', updateTrackLink);
 let presets = [];
 async function loadPresets() {
   presets = await api('/api/shipping-presets');
+  renderPresetSelect();
+  renderPresetLists();
+}
+function renderPresetSelect() {
   $('#ship-preset').innerHTML = '<option value="">– wählen –</option>'
     + presets.map(p => `<option value="${p.id}">${esc(p.name)} (${eur(p.price)})</option>`).join('');
-  $('#ship-list').innerHTML = presets.length ? presets.map(p => `
-    <div class="ship-row"><span class="grow"><strong>${esc(p.name)}</strong> · ${esc(p.carrier || 'kein Anbieter')} · ${eur(p.price)}</span>
-      <button type="button" class="danger" data-del-preset="${p.id}">Löschen</button></div>`).join('')
-    : '<p class="empty">Noch keine Vorlagen.</p>';
+}
+const presetRow = p => `
+  <div class="ship-row" data-preset="${p.id}"><span class="grow"><strong>${esc(p.name)}</strong> · ${esc(p.carrier || 'kein Anbieter')} · ${eur(p.price)}</span>
+    <button type="button" data-edit-preset="${p.id}">Bearbeiten</button>
+    <button type="button" class="danger" data-del-preset="${p.id}">Löschen</button></div>`;
+const presetEditRow = p => `
+  <form class="ship-row ship-edit" data-preset="${p.id}">
+    <input name="name" required maxlength="80" value="${esc(p.name)}" aria-label="Name">
+    <input name="carrier" list="dl-carrier" maxlength="40" value="${esc(p.carrier)}" aria-label="Anbieter">
+    <input name="price" type="number" inputmode="decimal" step="0.01" min="0" required value="${p.price}" aria-label="Preis in Euro">
+    <button class="primary" type="submit">Speichern</button>
+    <button type="button" data-cancel-preset>Abbrechen</button>
+  </form>`;
+// Die Liste gibt es zweimal (Einstellungen und Dialog im Artikel-Formular), beide zeigen denselben Stand
+function renderPresetLists(except) {
+  const html = presets.length ? presets.map(presetRow).join('') : '<p class="empty">Noch keine Vorlagen.</p>';
+  document.querySelectorAll('.ship-list').forEach(el => { if (el !== except) el.innerHTML = html; });
 }
 $('#ship-preset').addEventListener('change', e => {
   const p = presets.find(x => x.id == e.target.value);
@@ -490,51 +519,78 @@ $('#ship-preset').addEventListener('change', e => {
 });
 $('#btn-presets').addEventListener('click', () => $('#dlg-ship').showModal());
 $('#btn-ship-close').addEventListener('click', () => $('#dlg-ship').close());
-$('#ship-form').addEventListener('submit', async e => {
+
+const jsonHeaders = { 'Content-Type': 'application/json' };
+document.querySelectorAll('.ship-form').forEach(f => f.addEventListener('submit', async e => {
   e.preventDefault();
-  const f = e.target;
-  hideMsg('ship-error');
+  hideMsg(f.dataset.err);
   try {
-    await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    await api('/api/shipping-presets', { method: 'POST', headers: jsonHeaders,
       body: JSON.stringify({ name: f.name.value, carrier: f.carrier.value, price: f.price.value }) });
     f.reset();
     await loadPresets();
-  } catch (err) { showMsg('ship-error', 'Vorlage konnte nicht gespeichert werden: ' + err.message); }
-});
-// Löschen ist hier schnell wieder gut zu machen: kein Dialog, dafür „Rückgängig“ in der Zeile
+  } catch (err) { showMsg(f.dataset.err, 'Vorlage konnte nicht gespeichert werden: ' + err.message); }
+}));
+
+// Löschen ist schnell wieder gut zu machen: kein Dialog, dafür „Rückgängig“ in der Zeile
 const deletedPresets = new Map();
-$('#ship-list').addEventListener('click', async e => {
-  const del = e.target.closest('[data-del-preset]');
-  const undo = e.target.closest('[data-undo-preset]');
-  hideMsg('ship-error');
-  try {
-    if (del) {
-      const p = presets.find(x => x.id == del.dataset.delPreset);
-      await api('/api/shipping-presets/' + del.dataset.delPreset, { method: 'DELETE' });
-      if (p) deletedPresets.set(String(p.id), p);
-      const row = del.closest('.ship-row');
-      row.classList.add('undo');
-      row.innerHTML = `<span class="grow">„${esc(p?.name || 'Vorlage')}“ gelöscht</span><button type="button" data-undo-preset="${p?.id}">Rückgängig</button>`;
-    } else if (undo) {
-      const p = deletedPresets.get(undo.dataset.undoPreset);
-      if (!p) return;
-      await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: p.name, carrier: p.carrier, price: p.price }) });
-      deletedPresets.delete(undo.dataset.undoPreset);
+document.querySelectorAll('.ship-list').forEach(list => {
+  list.addEventListener('click', async e => {
+    const del = e.target.closest('[data-del-preset]');
+    const undo = e.target.closest('[data-undo-preset]');
+    const edit = e.target.closest('[data-edit-preset]');
+    const cancel = e.target.closest('[data-cancel-preset]');
+    hideMsg(list.dataset.err);
+    try {
+      if (edit) {
+        const p = presets.find(x => x.id == edit.dataset.editPreset);
+        if (p) { edit.closest('.ship-row').outerHTML = presetEditRow(p); list.querySelector('.ship-edit input')?.focus(); }
+      } else if (cancel) {
+        renderPresetLists();
+      } else if (del) {
+        const p = presets.find(x => x.id == del.dataset.delPreset);
+        await api('/api/shipping-presets/' + del.dataset.delPreset, { method: 'DELETE' });
+        if (p) deletedPresets.set(String(p.id), p);
+        presets = presets.filter(x => x.id != del.dataset.delPreset);
+        renderPresetSelect();
+        renderPresetLists(list);          // die andere Liste sofort aktualisieren
+        const row = del.closest('.ship-row');
+        row.classList.add('undo');
+        row.innerHTML = `<span class="grow">„${esc(p?.name || 'Vorlage')}“ gelöscht</span><button type="button" data-undo-preset="${p?.id}">Rückgängig</button>`;
+      } else if (undo) {
+        const p = deletedPresets.get(undo.dataset.undoPreset);
+        if (!p) return;
+        await api('/api/shipping-presets', { method: 'POST', headers: jsonHeaders,
+          body: JSON.stringify({ name: p.name, carrier: p.carrier, price: p.price }) });
+        deletedPresets.delete(undo.dataset.undoPreset);
+        await loadPresets();
+      }
+    } catch (err) { showMsg(list.dataset.err, 'Das hat nicht geklappt: ' + err.message); }
+  });
+  list.addEventListener('submit', async e => {
+    const f = e.target.closest('.ship-edit');
+    if (!f) return;
+    e.preventDefault();
+    hideMsg(list.dataset.err);
+    try {
+      await api('/api/shipping-presets/' + f.dataset.preset, { method: 'PUT', headers: jsonHeaders,
+        body: JSON.stringify({ name: f.name.value, carrier: f.carrier.value, price: f.price.value }) });
       await loadPresets();
-    }
-  } catch (err) { showMsg('ship-error', 'Das hat nicht geklappt: ' + err.message); }
+    } catch (err) { showMsg(list.dataset.err, 'Vorlage konnte nicht gespeichert werden: ' + err.message); }
+  });
 });
 
 // ---------- Dashboard ----------
-const store = {
-  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch { /* Speicher nicht verfügbar */ } }
-};
-let period = store.get('rd-period', 'all');
-if (!['month', '3m', 'year', 'all'].includes(period)) period = 'all';
-let deadDays = Number(store.get('rd-dead', 60));
-if (![30, 60, 90].includes(deadDays)) deadDays = 60;
+// Standard-Zeitraum und Ladenhüter-Grenze kommen aus den Einstellungen (Server). Umschalten im Dashboard gilt nur,
+// bis die Seite neu geladen wird.
+let settings = { default_period: 'all', dead_days: 60, monthly_goal: null };
+let period = 'all';
+let deadDays = 60;
+async function loadSettings() {
+  settings = await api('/api/settings');
+  period = settings.default_period;
+  deadDays = settings.dead_days;
+}
 
 const monthDate = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m - 1, 1); };
 const monthLabel = key => monthDate(key).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
@@ -597,7 +653,20 @@ function renderMonthCard(tm) {
     <div class="mc-cmp">
       <div>${cmp}</div>
       <div class="muted">${monthLong(p.month)} gesamt: ${eur(p.full.profit)} · ${verk(p.full.count)}</div>
-    </div>`;
+    </div>${goalHtml(tm.profit)}`;
+}
+
+// Fortschritt zum Monatsziel (nur wenn in den Einstellungen gesetzt)
+function goalHtml(profit) {
+  const goal = settings.monthly_goal;
+  if (!goal) return '';
+  const share = Math.max(0, profit) / goal;
+  const w = Math.min(1, share) * 100;
+  const right = share >= 1 ? `✓ erreicht${profit > goal ? ' (+' + eur(profit - goal) + ')' : ''}` : `${pct(share)} · noch ${eur(goal - Math.max(0, profit))}`;
+  return `<div class="mc-goal">
+    <div class="goal-text"><span>Monatsziel ${eur(goal)}</span><span class="${share >= 1 ? 'pos' : 'muted'}">${right}</span></div>
+    <div class="goal-track" role="progressbar" aria-label="Fortschritt Monatsziel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(w)}"><div class="goal-fill${share >= 1 ? ' done' : ''}" style="width:${w}%"></div></div>
+  </div>`;
 }
 
 function renderMonthTable(monthly) {
@@ -624,6 +693,9 @@ function syncControls() {
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', String(on));
   });
+  // 30/60/90 sind immer wählbar, ein eigener Wert aus den Einstellungen kommt dazu
+  const days = [...new Set([30, 60, 90, deadDays])].sort((a, b) => a - b);
+  $('#dead-days').innerHTML = days.map(d => `<option value="${d}">ab ${d} Tagen</option>`).join('');
   $('#dead-days').value = String(deadDays);
 }
 
@@ -631,13 +703,11 @@ document.querySelectorAll('.seg[data-seg="period"]').forEach(seg => seg.addEvent
   const b = e.target.closest('button[data-period]');
   if (!b) return;
   period = b.dataset.period;
-  store.set('rd-period', period);
   syncControls();
   refreshActiveView();
 }));
 $('#dead-days').addEventListener('change', e => {
   deadDays = Number(e.target.value);
-  store.set('rd-dead', String(deadDays));
   loadStats();
 });
 
@@ -771,7 +841,8 @@ function showLoadError(err, retry) {
 // ---------- Start ----------
 function start() {
   loadPresets().catch(() => {});
-  return loadItems().then(loadStats).catch(err => {
+  // Einstellungen zuerst, damit das Dashboard gleich mit dem Standard-Zeitraum startet; ohne sie gelten die Standardwerte
+  return loadSettings().catch(() => {}).then(loadItems).then(loadStats).catch(err => {
     const list = $('#items-list');
     list.setAttribute('aria-busy', 'false');
     if (list.querySelector('.skel-item')) list.innerHTML = '';
@@ -780,4 +851,5 @@ function start() {
     showLoadError(err, start);
   });
 }
+document.body.dataset.view = 'dashboard';
 start();

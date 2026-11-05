@@ -24,6 +24,7 @@ async function loadSales() {
     syncControls();
     fillPlatformFilter();
     renderSales();
+    renderSalesCharts();
     hideMsg('load-error');
   } catch (err) {
     showLoadError(err, loadSales);

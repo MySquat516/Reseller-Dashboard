@@ -4,12 +4,15 @@
   "description": "Artikelverwaltung und Finanz-Dashboard für Reseller",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",
     "chart.js": "^4.4.6",
     "express": "^4.21.1",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "yauzl": "^3.2.0",
+    "yazl": "^3.3.1"
   }
 }
