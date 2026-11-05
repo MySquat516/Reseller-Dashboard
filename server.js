@@ -597,6 +597,7 @@ app.get('/api/stats', (req, res) => {
 });
 
 require('./backup')({ app, db, DATA_DIR, UPLOAD_DIR, sniffImageExt });
+require('./csvimport')({ app, db, FIELDS, STATUSES, SOLD_STATUSES, validDay });
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) return res.status(400).json({ error: 'Upload-Fehler: ' + err.message });
