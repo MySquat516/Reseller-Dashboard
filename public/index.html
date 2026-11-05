@@ -31,6 +31,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
       <span>Artikel</span>
     </button>
+    <button class="tab" data-view="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+      <span>Einstellungen</span>
+    </button>
   </nav>
   <button class="primary" id="btn-new" aria-label="Neuer Artikel"><span class="plus" aria-hidden="true">+</span><span class="lbl">+ Neuer Artikel</span></button>
 </header>
@@ -114,6 +118,50 @@
       </select>
     </div>
     <div id="items-list" class="items" aria-busy="true"><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article></div>
+  </section>
+
+  <!-- Einstellungen -->
+  <section id="view-settings" hidden>
+    <div class="settings-grid">
+      <div class="card">
+        <h3>Standardwerte</h3>
+        <div class="banner error" id="set-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
+        <div class="set-row">
+          <label for="set-period">Standard-Zeitraum</label>
+          <select id="set-period">
+            <option value="month">Dieser Monat</option>
+            <option value="3m">3 Monate</option>
+            <option value="year">Dieses Jahr</option>
+            <option value="all">Alles</option>
+          </select>
+          <p class="hint">Dieser Zeitraum ist beim Öffnen von Dashboard und Verkäufen eingestellt. Umschalten dort gilt nur, bis du die Seite neu lädst.</p>
+        </div>
+        <div class="set-row">
+          <label for="set-dead">Ladenhüter ab</label>
+          <div class="inline"><input id="set-dead" type="number" min="7" max="365" step="1" inputmode="numeric" required> <span>Tagen</span></div>
+          <p class="hint">Unverkaufte Artikel, die so lange liegen, erscheinen im Dashboard als Ladenhüter (reservierte nicht).</p>
+        </div>
+        <div class="set-row">
+          <label for="set-goal">Monatsziel (Gewinn)</label>
+          <div class="inline"><input id="set-goal" type="number" min="1" step="1" inputmode="decimal" placeholder="aus"> <span>€</span></div>
+          <p class="hint">Optional. Wenn gesetzt, zeigt das Dashboard den Fortschritt im aktuellen Monat. Leer lassen = aus.</p>
+        </div>
+        <p class="hint" id="set-status" role="status" aria-live="polite">Änderungen werden gespeichert, sobald du ein Feld verlässt.</p>
+      </div>
+
+      <div class="card">
+        <h3>Versandvorlagen</h3>
+        <p class="hint">Eine Vorlage füllt im Artikel Anbieter und Versandkosten aus. Preise trägst du selbst ein, damit sie nie veralten.</p>
+        <div class="banner error" id="set-ship-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
+        <div id="set-presets" class="ship-list" data-err="set-ship-error"></div>
+        <form class="row3 ship-form" data-err="set-ship-error">
+          <label>Name <input name="name" required maxlength="80" placeholder="z. B. DHL Paket S"></label>
+          <label>Anbieter <input name="carrier" list="dl-carrier" maxlength="40"></label>
+          <label>Preis € <input name="price" type="number" inputmode="decimal" step="0.01" min="0" required></label>
+          <button class="primary" type="submit">Hinzufügen</button>
+        </form>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -227,8 +275,8 @@
   <h2>Versandvorlagen</h2>
   <p class="hint">Eine Vorlage füllt im Artikel Anbieter und Versandkosten aus. Preise trägst du selbst ein, damit sie nie veralten.</p>
   <div class="banner error" id="ship-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
-  <div id="ship-list"></div>
-  <form id="ship-form" class="row3">
+  <div id="ship-list" class="ship-list" data-err="ship-error"></div>
+  <form class="row3 ship-form" data-err="ship-error">
     <label>Name <input name="name" required maxlength="80" placeholder="z. B. DHL Paket S"></label>
     <label>Anbieter <input name="carrier" list="dl-carrier" maxlength="40"></label>
     <label>Preis € <input name="price" type="number" inputmode="decimal" step="0.01" min="0" required></label>
@@ -260,5 +308,6 @@
 <script src="/vendor/chart.js/chart.umd.js"></script>
 <script src="app.js"></script>
 <script src="sales.js"></script>
+<script src="settings.js"></script>
 </body>
 </html>

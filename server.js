@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS images (
   filename TEXT NOT NULL,
   position INTEGER DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL                          -- JSON
+);
 `);
 
 // Spalten, die erst später dazukamen: bei bestehenden Datenbanken nachrüsten
@@ -171,6 +175,51 @@ app.put('/api/shipping-presets/:id', (req, res) => {
 app.delete('/api/shipping-presets/:id', (req, res) => {
   db.prepare('DELETE FROM shipping_presets WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
+});
+
+// Einstellungen: Standardwerte für Oberfläche und Auswertung (serverseitig, gelten auf allen Geräten)
+const SETTING_DEFAULTS = { default_period: 'all', dead_days: 60, monthly_goal: null };
+function cleanSettings(b) {
+  const out = {};
+  if ('default_period' in b) {
+    if (!PERIODS.includes(b.default_period)) return { error: 'Ungültiger Standard-Zeitraum' };
+    out.default_period = b.default_period;
+  }
+  if ('dead_days' in b) {
+    const n = Number(b.dead_days);
+    if (b.dead_days === null || b.dead_days === '' || !Number.isInteger(n) || n < 7 || n > 365) {
+      return { error: 'Ladenhüter-Grenze: ganze Zahl von 7 bis 365 Tagen' };
+    }
+    out.dead_days = n;
+  }
+  if ('monthly_goal' in b) {
+    if (b.monthly_goal === null || b.monthly_goal === '') out.monthly_goal = null;
+    else {
+      const n = Number(b.monthly_goal);
+      if (!Number.isFinite(n) || n <= 0 || n > 10000000) return { error: 'Monatsziel: Betrag über 0 € oder leer lassen' };
+      out.monthly_goal = Math.round(n * 100) / 100;
+    }
+  }
+  return { values: out };
+}
+function readSettings() {
+  const out = { ...SETTING_DEFAULTS };
+  for (const { key, value } of db.prepare('SELECT key, value FROM settings').all()) {
+    if (!(key in SETTING_DEFAULTS)) continue;
+    try {
+      const c = cleanSettings({ [key]: JSON.parse(value) });
+      if (c.values) Object.assign(out, c.values);   // ungültige Werte ignorieren, Standard bleibt
+    } catch { /* kaputter Wert: Standard bleibt */ }
+  }
+  return out;
+}
+app.get('/api/settings', (req, res) => res.json(readSettings()));
+app.put('/api/settings', (req, res) => {
+  const { values, error } = cleanSettings(req.body || {});
+  if (error) return res.status(400).json({ error });
+  const up = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+  db.transaction(() => { for (const [k, v] of Object.entries(values)) up.run(k, JSON.stringify(v)); })();
+  res.json(readSettings());
 });
 
 function withImages(items) {
@@ -322,7 +371,6 @@ const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 const soldDay = it => it.sold_date || (it.created_at || '').slice(0, 10);
 
 const PERIODS = ['month', '3m', 'year', 'all'];
-const DEAD_DAYS = [30, 60, 90];
 
 function periodStart(period, now) {
   if (period === 'month') return `${monthKey(now)}-01`;
@@ -392,7 +440,9 @@ app.get('/api/sales', (req, res) => {
 
 app.get('/api/stats', (req, res) => {
   const period = PERIODS.includes(req.query.period) ? req.query.period : 'all';
-  const deadDays = DEAD_DAYS.includes(Number(req.query.dead)) ? Number(req.query.dead) : 60;
+  // ?dead=N (7-365) überschreibt die gespeicherte Ladenhüter-Grenze
+  const dq = Number(req.query.dead);
+  const deadDays = Number.isInteger(dq) && dq >= 7 && dq <= 365 ? dq : readSettings().dead_days;
   const now = new Date();
   const today = localDay(now);
   const from = periodStart(period, now);
