@@ -11,8 +11,39 @@ let editing = null;      // Artikel-Objekt oder null
 let gallery = [];        // Bilder im Dialog in Reihenfolge: {id,url} (gespeichert) oder {file,url} (neu)
 let removedIds = [];     // gespeicherte Bilder, die beim Speichern gelöscht werden
 
+// ---------- Meldungen (statt alert/confirm) ----------
+function showMsg(id, text, kind = 'error') {
+  const el = $('#' + id);
+  el.classList.toggle('info', kind === 'info');
+  el.querySelector('.msg').textContent = text;
+  el.hidden = false;
+}
+const hideMsg = id => { $('#' + id).hidden = true; };
+document.addEventListener('click', e => {
+  const c = e.target.closest('.banner-close');
+  if (c) c.closest('.banner').hidden = true;
+});
+
+// Eigener Bestätigungsdialog für Unumkehrbares; Abbrechen ist vorausgewählt
+function confirmDialog({ title, text, ok }) {
+  const d = $('#dlg-confirm');
+  $('#cf-title').textContent = title;
+  $('#cf-text').textContent = text;
+  $('#cf-ok').textContent = ok;
+  return new Promise(resolve => {
+    d.returnValue = 'cancel';
+    const done = () => { d.removeEventListener('close', done); resolve(d.returnValue === 'ok'); };
+    d.addEventListener('close', done);
+    d.showModal();
+    $('#cf-cancel').focus();
+  });
+}
+$('#cf-ok').addEventListener('click', () => $('#dlg-confirm').close('ok'));
+$('#cf-cancel').addEventListener('click', () => $('#dlg-confirm').close('cancel'));
+
 async function api(url, opts = {}) {
-  const res = await fetch(url, opts);
+  let res;
+  try { res = await fetch(url, opts); } catch { throw new Error('Keine Verbindung zum Server'); }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || res.statusText);
@@ -25,7 +56,11 @@ document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => showView(b.dataset.view)));
 
 function showView(v) {
-  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  document.querySelectorAll('.tab').forEach(b => {
+    const on = b.dataset.view === v;
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
   $('#view-dashboard').hidden = v !== 'dashboard';
   $('#view-items').hidden = v !== 'items';
   if (v === 'dashboard') loadStats();
@@ -34,6 +69,7 @@ function showView(v) {
 // ---------- Artikelliste ----------
 async function loadItems() {
   items = await api('/api/items');
+  $('#items-list').setAttribute('aria-busy', 'false');
   renderItems();
   fillDatalists();
 }
@@ -47,7 +83,7 @@ function renderItems() {
     (!st || (st === 'aktiv' ? i.status !== 'verkauft' : i.status === st)) &&
     (!q || [i.title, i.brand, i.category, i.description, i.platform].some(x => (x || '').toLowerCase().includes(q))));
   $('#items-list').innerHTML = list.length ? list.map(i => `
-    <article class="item" data-id="${i.id}">
+    <article class="item" data-id="${i.id}" tabindex="0" role="button">
       <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '📷'}${i.images.length > 1 ? `<span class="count">📷 ${i.images.length}</span>` : ''}</div>
       <div class="body">
         <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
@@ -67,9 +103,16 @@ function fillDatalists() {
 
 $('#f-search').addEventListener('input', renderItems);
 $('#f-status').addEventListener('change', renderItems);
+$('#items-list').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('.item[data-id]');
+  if (!el || e.target !== el) return;
+  e.preventDefault();
+  openDialog(items.find(i => i.id == el.dataset.id));
+});
 $('#items-list').addEventListener('click', e => {
   const el = e.target.closest('.item');
-  if (el) openDialog(items.find(i => i.id == el.dataset.id));
+  if (el && el.dataset.id) openDialog(items.find(i => i.id == el.dataset.id));
 });
 
 // ---------- Dialog ----------
@@ -84,7 +127,7 @@ function openDialog(item) {
   gallery = (item?.images || []).map(i => ({ id: i.id, url: i.url }));
   removedIds = [];
   form.reset();
-  $('#dlg-title').textContent = item ? 'Artikel bearbeiten' : 'Neuer Artikel';
+  $('#dlg-title').textContent = item ? 'Bearbeiten' : 'Neuer Artikel';
   $('#btn-delete').hidden = !item;
   if (item) {
     for (const el of form.elements) {
@@ -95,8 +138,20 @@ function openDialog(item) {
   updateProfit();
   updateWarnings();
   updateTrackLink();
+  hideMsg('form-error');
+  $('#sale-details').open = false;
+  syncSaleDetails();
   dlg.showModal();
+  dlg.scrollTop = 0;
 }
+
+// „Verkauf & Versand" bleibt zu, solange der Artikel noch nicht reserviert oder verkauft ist
+const SALE_STATES = ['reserviert', 'zu_versenden', 'versendet', 'verkauft'];
+function syncSaleDetails() {
+  const f = form.elements;
+  if (SALE_STATES.includes(f.status.value) || f.sold_price.value !== '') $('#sale-details').open = true;
+}
+form.elements.status.addEventListener('change', syncSaleDetails);
 
 const MAX_IMAGES = 60;
 
@@ -115,7 +170,7 @@ function renderThumbs() {
 function addFiles(files) {
   const imgs = [...files].filter(f => f.type.startsWith('image/'));
   const room = MAX_IMAGES - gallery.length;
-  if (imgs.length > room) alert(`Maximal ${MAX_IMAGES} Bilder pro Artikel – ${imgs.length - Math.max(room, 0)} Bild(er) wurden nicht übernommen.`);
+  if (imgs.length > room) showMsg('form-error', `Maximal ${MAX_IMAGES} Bilder pro Artikel – ${imgs.length - Math.max(room, 0)} Bild(er) wurden nicht übernommen.`, 'info');
   for (const f of imgs.slice(0, Math.max(room, 0))) gallery.push({ file: f, url: URL.createObjectURL(f) });
   renderThumbs();
 }
@@ -270,6 +325,7 @@ form.addEventListener('submit', async e => {
   const btn = form.querySelector('button[type=submit]');
   const json = { 'Content-Type': 'application/json' };
   btn.disabled = true;
+  hideMsg('form-error');
   try {
     let id = editing?.id;
     if (id) await api('/api/items/' + id, { method: 'PUT', headers: json, body: JSON.stringify(body) });
@@ -297,7 +353,7 @@ form.addEventListener('submit', async e => {
     await loadItems();
     if (!$('#view-dashboard').hidden) loadStats();
   } catch (err) {
-    alert('Fehler beim Speichern: ' + err.message);
+    showMsg('form-error', 'Speichern fehlgeschlagen: ' + err.message + '. Bitte versuch es noch einmal.');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Speichern';
@@ -305,11 +361,23 @@ form.addEventListener('submit', async e => {
 });
 
 $('#btn-delete').addEventListener('click', async () => {
-  if (!editing || !confirm(`„${editing.title}" wirklich löschen?`)) return;
-  await api('/api/items/' + editing.id, { method: 'DELETE' });
-  dlg.close();
-  await loadItems();
-  if (!$('#view-dashboard').hidden) loadStats();
+  if (!editing) return;
+  const n = gallery.length;
+  const what = n ? `Der Artikel und ${n === 1 ? 'sein Bild werden' : `seine ${n} Bilder werden`}` : 'Der Artikel wird';
+  const ok = await confirmDialog({
+    title: `„${editing.title}" löschen?`,
+    text: `${what} dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.`,
+    ok: 'Artikel löschen'
+  });
+  if (!ok) return;
+  try {
+    await api('/api/items/' + editing.id, { method: 'DELETE' });
+    dlg.close();
+    await loadItems();
+    if (!$('#view-dashboard').hidden) loadStats();
+  } catch (err) {
+    showMsg('form-error', 'Löschen fehlgeschlagen: ' + err.message);
+  }
 });
 
 // ---------- Versand ----------
@@ -358,18 +426,37 @@ $('#btn-ship-close').addEventListener('click', () => $('#dlg-ship').close());
 $('#ship-form').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target;
+  hideMsg('ship-error');
   try {
     await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: f.name.value, carrier: f.carrier.value, price: f.price.value }) });
     f.reset();
     await loadPresets();
-  } catch (err) { alert('Fehler: ' + err.message); }
+  } catch (err) { showMsg('ship-error', 'Vorlage konnte nicht gespeichert werden: ' + err.message); }
 });
+// Löschen ist hier schnell wieder gut zu machen: kein Dialog, dafür „Rückgängig“ in der Zeile
+const deletedPresets = new Map();
 $('#ship-list').addEventListener('click', async e => {
-  const b = e.target.closest('[data-del-preset]');
-  if (!b || !confirm('Vorlage löschen?')) return;
-  await api('/api/shipping-presets/' + b.dataset.delPreset, { method: 'DELETE' });
-  await loadPresets();
+  const del = e.target.closest('[data-del-preset]');
+  const undo = e.target.closest('[data-undo-preset]');
+  hideMsg('ship-error');
+  try {
+    if (del) {
+      const p = presets.find(x => x.id == del.dataset.delPreset);
+      await api('/api/shipping-presets/' + del.dataset.delPreset, { method: 'DELETE' });
+      if (p) deletedPresets.set(String(p.id), p);
+      const row = del.closest('.ship-row');
+      row.classList.add('undo');
+      row.innerHTML = `<span class="grow">„${esc(p?.name || 'Vorlage')}“ gelöscht</span><button type="button" data-undo-preset="${p?.id}">Rückgängig</button>`;
+    } else if (undo) {
+      const p = deletedPresets.get(undo.dataset.undoPreset);
+      if (!p) return;
+      await api('/api/shipping-presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: p.name, carrier: p.carrier, price: p.price }) });
+      deletedPresets.delete(undo.dataset.undoPreset);
+      await loadPresets();
+    }
+  } catch (err) { showMsg('ship-error', 'Das hat nicht geklappt: ' + err.message); }
 });
 
 // ---------- Dashboard ----------
@@ -393,15 +480,25 @@ function kpi(label, value, sub = '', c = '') {
   return `<div class="kpi"><div class="label">${label}</div><div class="value ${c}">${value}</div><div class="sub">${sub}</div></div>`;
 }
 
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
 function chart(id, config) {
   charts[id]?.destroy();
-  const css = getComputedStyle(document.documentElement);
-  Chart.defaults.color = css.getPropertyValue('--muted').trim();
-  Chart.defaults.borderColor = css.getPropertyValue('--border').trim();
+  Chart.defaults.color = cssVar('--muted');
+  Chart.defaults.borderColor = cssVar('--border');
+  // Chart-Text skaliert mit der Systemschrift (rem-Basis), mindestens 12 px
+  Chart.defaults.font.size = Math.max(12, Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.76));
+  if (reduceMotion) Chart.defaults.animation = false;
   charts[id] = new Chart($('#' + id), config);
 }
 
-const PALETTE = ['#5b9dff', '#3ecf8e', '#f5b942', '#ff6b6b', '#b48cff', '#4fd1d9', '#ff9f6b', '#9aa7c2'];
+// Screenreader: Das Canvas ist ein Bild, also bekommt es eine Textfassung der Kernwerte
+function describe(id, title, parts) {
+  const el = $('#' + id);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', parts.length ? `${title}: ${parts.slice(0, 8).join('; ')}` : `${title}: keine Daten`);
+}
 
 function table(rows, cols, foot) {
   if (!rows.length) return '<p class="empty">Noch keine Daten.</p>';
@@ -476,7 +573,17 @@ $('#dead-days').addEventListener('change', e => {
   loadStats();
 });
 
-async function loadStats() {
+$('#kpi-toggle').addEventListener('click', () => {
+  const open = $('#kpis').classList.toggle('expanded');
+  $('#kpi-toggle').setAttribute('aria-expanded', open);
+  $('#kpi-toggle').textContent = open ? 'Weniger Kennzahlen' : 'Mehr Kennzahlen';
+});
+$('#period-info').addEventListener('click', () => {
+  const p = $('#period-hint'); p.hidden = !p.hidden;
+  $('#period-info').setAttribute('aria-expanded', String(!p.hidden));
+});
+
+async function renderStats() {
   syncControls();
   const s = await api(`/api/stats?period=${period}&dead=${deadDays}`);
   const t = s.totals;
@@ -485,52 +592,65 @@ async function loadStats() {
     + 'Lagerwert, Bestand und Ladenhüter zeigen immer den aktuellen Stand.';
   renderMonthCard(s.thisMonth);
 
+  // Auf dem Handy nur die wichtigsten Kennzahlen, der Rest hinter „Mehr Kennzahlen“ (Klasse kpi-extra)
   $('#kpis').innerHTML = [
     kpi('Gewinn', eur(t.profit), `${t.sold} verkauft`, cls(t.profit)),
     kpi('Umsatz', eur(t.revenue), `Kosten ${eur(t.cost)} + Gebühren ${eur(t.fees)}`),
     kpi('Marge', pct(t.margin), `ROI ${pct(t.roi)}`),
-    kpi('Ø Gewinn / Artikel', eur(t.avgProfit)),
     kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft, aktuell`),
-    kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft'),
-    kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)),
-    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '')
+    kpi('Ø Gewinn / Artikel', eur(t.avgProfit)).replace('class="kpi"', 'class="kpi kpi-extra"'),
+    kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft').replace('class="kpi"', 'class="kpi kpi-extra"'),
+    kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)).replace('class="kpi"', 'class="kpi kpi-extra"'),
+    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '').replace('class="kpi"', t.openPayments > 0 ? 'class="kpi"' : 'class="kpi kpi-extra"')
   ].join('');
+
+  // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
+  const C = { revenue: cssVar('--accent'), profit: cssVar('--good'), count: cssVar('--muted') };
 
   chart('ch-monthly', {
     type: 'bar',
     data: {
       labels: s.monthly.map(m => monthLabel(m.month)),
       datasets: [
-        { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: PALETTE[0] },
-        { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: PALETTE[1] }
+        { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: C.revenue },
+        { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: C.profit }
       ]
     },
     options: { plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eur(c.parsed.y)}` } } }, scales: { y: { ticks: { callback: v => eur(v) } } } }
   });
+  const lastM = s.monthly[s.monthly.length - 1];
+  describe('ch-monthly', 'Balkendiagramm Umsatz und Gewinn pro Monat', lastM
+    ? [`${monthLong(lastM.month)}: Umsatz ${eur(lastM.revenue)}, Gewinn ${eur(lastM.profit)}`, `${s.monthly.length} Monate insgesamt, alle Werte stehen in der Monatsübersicht`] : []);
   renderMonthTable(s.monthly);
 
   chart('ch-platform', {
     type: 'bar',
-    data: { labels: s.byPlatform.map(p => p.name), datasets: [{ label: 'Gewinn', data: s.byPlatform.map(p => p.profit), backgroundColor: PALETTE[0] }] },
+    data: { labels: s.byPlatform.map(p => p.name), datasets: [{ label: 'Gewinn', data: s.byPlatform.map(p => p.profit), backgroundColor: C.profit }] },
     options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => eur(c.parsed.x) + ` (${s.byPlatform[c.dataIndex].count} Verk.)` } } } }
   });
+  describe('ch-platform', 'Gewinn nach Plattform', s.byPlatform.map(p => `${p.name} ${eur(p.profit)}`));
 
   chart('ch-payment', {
-    type: 'doughnut',
-    data: { labels: s.byPayment.map(p => p.name), datasets: [{ data: s.byPayment.map(p => p.count), backgroundColor: PALETTE, borderWidth: 0 }] },
-    options: { plugins: { tooltip: { callbacks: { label: c => `${c.label}: ${c.parsed} Verkäufe (${eur(s.byPayment[c.dataIndex].revenue)})` } } } }
+    type: 'bar',
+    data: { labels: s.byPayment.map(p => p.name), datasets: [{ label: 'Verkäufe', data: s.byPayment.map(p => p.count), backgroundColor: C.count }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${verk(c.parsed.x)} (${eur(s.byPayment[c.dataIndex].revenue)})` } } }, scales: { x: { ticks: { precision: 0 } } } }
   });
+  describe('ch-payment', 'Zahlungsarten', s.byPayment.map(p => `${p.name} ${verk(p.count)}`));
 
   chart('ch-category', {
     type: 'bar',
-    data: { labels: s.byCategory.map(c => c.name), datasets: [{ label: 'Marge', data: s.byCategory.map(c => c.margin * 100), backgroundColor: PALETTE[2] }] },
+    data: { labels: s.byCategory.map(c => c.name), datasets: [{ label: 'Marge', data: s.byCategory.map(c => c.margin * 100), backgroundColor: C.profit }] },
     options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => pct(c.parsed.y / 100) } } }, scales: { y: { ticks: { callback: v => v + ' %' } } } }
   });
+  describe('ch-category', 'Marge nach Kategorie', s.byCategory.map(c => `${c.name} ${pct(c.margin)}`));
 
+  const statusName = x => STATUS_LABEL[x.name] || x.name;
   chart('ch-status', {
-    type: 'doughnut',
-    data: { labels: s.byStatus.map(x => STATUS_LABEL[x.name] || x.name), datasets: [{ data: s.byStatus.map(x => x.count), backgroundColor: ['#8b95ab', PALETTE[0], PALETTE[4], PALETTE[5], PALETTE[2], PALETTE[1]], borderWidth: 0 }] }
+    type: 'bar',
+    data: { labels: s.byStatus.map(statusName), datasets: [{ label: 'Artikel', data: s.byStatus.map(x => x.count), backgroundColor: C.count }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.x} Artikel` } } }, scales: { x: { ticks: { precision: 0 } } } }
   });
+  describe('ch-status', 'Bestand nach Status', s.byStatus.map(x => `${statusName(x)} ${x.count}`));
 
   $('#tbl-brand').innerHTML = table(s.byBrand.slice(0, 8), [
     { h: 'Marke', f: r => esc(r.name) },
@@ -550,6 +670,38 @@ async function loadStats() {
   ]) : '<p class="empty">Keine Ladenhüter 🎉</p>';
 }
 
+// Während des Ladens bleibt der alte Stand sichtbar (gedimmt), statt zu verschwinden
+async function loadStats() {
+  const view = $('#view-dashboard');
+  view.setAttribute('aria-busy', 'true');
+  try {
+    await renderStats();
+    view.classList.add('loaded');
+    view.classList.remove('failed');
+    hideMsg('load-error');
+  } catch (err) {
+    view.classList.add('failed');   // Platzhalter nicht endlos weiter schimmern lassen
+    showLoadError(err, loadStats);
+  } finally {
+    view.setAttribute('aria-busy', 'false');
+  }
+}
+
+function showLoadError(err, retry) {
+  showMsg('load-error', 'Daten konnten nicht geladen werden: ' + err.message);
+  $('#load-retry').onclick = () => { hideMsg('load-error'); retry(); };
+}
+
 // ---------- Start ----------
-loadPresets().catch(() => {});
-loadItems().then(loadStats).catch(err => alert('Fehler beim Laden: ' + err.message));
+function start() {
+  loadPresets().catch(() => {});
+  return loadItems().then(loadStats).catch(err => {
+    const list = $('#items-list');
+    list.setAttribute('aria-busy', 'false');
+    if (list.querySelector('.skel-item')) list.innerHTML = '';
+    $('#view-dashboard').classList.add('failed');
+    $('#view-dashboard').setAttribute('aria-busy', 'false');
+    showLoadError(err, start);
+  });
+}
+start();
