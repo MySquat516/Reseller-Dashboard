@@ -31,16 +31,16 @@ docker compose up -d     # Container neu starten
 Update = nur diese zwei Befehle, die Dateien müssen nicht mehr aktualisiert werden. Einzig die
 `docker-compose.yml` braucht der Server einmalig.
 
-**Zugriff auf das Image:** Ist das Repo privat, ist das Image es auch. Der Server meldet sich dann einmal an:
+**Zugriff auf das Image:** Ob der Server sich anmelden muss, hängt von der Sichtbarkeit des Pakets ab
+(GitHub → *Packages → reseller-dashboard → Package settings*). Ist es „Public“, klappt `docker compose pull` ohne Login.
+Ist es privat, meldet sich der Server einmal an:
 
 ```bash
 docker login ghcr.io -u <github-benutzername>
 ```
 
 Als Passwort dient ein *Personal Access Token (classic)* mit dem Recht `read:packages`
-(GitHub → Settings → Developer settings → Personal access tokens). Alternativ lässt sich das Paket auf GitHub
-unter *Packages → reseller-dashboard → Package settings* auf „Public“ stellen, dann ist kein Login nötig
-(der Code der App steckt dann allerdings im öffentlichen Image).
+(GitHub → Settings → Developer settings → Personal access tokens).
 
 Das Image erscheint erst nach dem ersten Push auf `main`. Außerdem gibt es pro Build den Tag `sha-<commit>`,
 damit sich ein älterer Stand wiederherstellen lässt (`image: …:sha-abc1234`).
@@ -53,15 +53,22 @@ docker compose up -d --build
 
 Danach erreichbar unter `http://<server>:3000`.
 
-Der Build läuft mit `network: host` (siehe `docker-compose.yml`), damit `npm install` im Docker-Build
+Der Build läuft mit `network: host` (siehe `docker-compose.yml`), damit `npm ci` im Docker-Build
 auch bei DNS-Problemen im Heimnetz funktioniert. Beim Selbstbauen wird das Image lokal aus dem `Dockerfile` erzeugt
 und unter demselben Namen wie das fertige Image abgelegt.
 
 **Update beim Selbstbauen:** neuen Stand holen (`git pull` oder neues ZIP entpacken, den Ordner `data` behalten) und
 `docker compose up -d --build` ausführen. Neue Datenbankspalten werden beim Start automatisch ergänzt.
 
-Alle Daten (Datenbank `reseller.db` und Bilder in `uploads/`) liegen im Ordner `./data`.
-Backup = diesen Ordner kopieren, oder bequemer über die App (siehe unten).
+### Container und Daten
+
+Der Container läuft aus Sicherheitsgründen nicht als root, sondern als Benutzer `node`. Beim ersten Start nach einem
+Update setzt er den Besitzer von `./data` automatisch darauf (einmalig, das kann bei vielen Fotos kurz dauern).
+Ob die App gesund ist, zeigt `docker ps` (Status `healthy`); sie fragt dafür `/healthz` ab.
+
+Alle Daten (Datenbank `reseller.db` und Bilder in `uploads/`) liegen im Ordner `./data`. Am bequemsten sicherst du sie
+über die App (siehe unten). Wer `./data` von Hand kopiert, stoppt vorher den Container (`docker compose stop`):
+Die Datenbank läuft im WAL-Modus, eine Kopie bei laufender App kann die letzten Änderungen verlieren oder unvollständig sein.
 
 ### Backup und Wiederherstellung
 
@@ -86,15 +93,15 @@ Optionale Umgebungsvariablen (in `docker-compose.yml` unter `environment`):
 | `BACKUP_DIR` | `<Datenordner>/backups` | anderer Ort für die Sicherungen, zum Beispiel eine zweite Platte |
 | `MAX_RESTORE_MB` | `4096` | größte erlaubte Datei beim Einspielen |
 
-Der Container läuft aus Sicherheitsgründen nicht als root, sondern als Benutzer `node`. Beim ersten Start nach einem
-Update setzt er den Besitzer von `./data` automatisch darauf (einmalig, das kann bei vielen Fotos kurz dauern).
-Ob die App gesund ist, zeigt `docker ps` (Status `healthy`); sie fragt dafür `/healthz` ab.
-
 ## Starten ohne Docker
+
+Voraussetzung: Node.js 20 oder 22 (darauf laufen die Tests). Für Node 24 gibt es für die eingesetzte
+better-sqlite3-Version keine fertigen Pakete, `npm install` müsste es dann selbst kompilieren (braucht Python, make und einen C++-Compiler).
 
 ```bash
 npm install
-npm start
+npm start      # http://localhost:3000, Daten landen in ./data
+npm test       # automatische Tests, siehe unten
 ```
 
 ## Als App auf dem Handy nutzen
@@ -105,12 +112,20 @@ Die Weboberfläche ist für Handys ausgelegt und lässt sich wie eine App auf de
 - **Android (Chrome):** Menü → „Zum Startbildschirm hinzufügen". Als vollständig installierte App bietet
   Chrome das nur über HTTPS an.
 
-Das funktioniert auch über reines HTTP (`http://<server-ip>:3000`). Ohne HTTPS bleibt der Service Worker
-inaktiv, die App braucht dann immer eine Verbindung zum Server (kein Offline-Betrieb).
+Das funktioniert auch über reines HTTP (`http://<server-ip>:3000`). Einen Offline-Modus gibt es nicht,
+die App braucht immer eine Verbindung zum Server.
 
 Von unterwegs: erst per VPN (z. B. WireGuard) ins Heimnetz verbinden und dann dieselbe Adresse öffnen.
-Der Datenverkehr ist durch das VPN verschlüsselt. Die App hat keinen eigenen Login und gehört nicht
-ungeschützt ins Internet.
+Der Datenverkehr ist durch das VPN verschlüsselt. Ohne den optionalen Passwortschutz (siehe unten) gehört die App
+nicht ungeschützt ins Internet.
+
+## iOS-App
+
+Im Ordner [`ios/`](ios/README.md) liegt eine native SwiftUI-App für iPhone und iPad, die dieselbe API nutzt
+(Daten bleiben auf dem Server). Stand: Artikelliste mit Suche und Filter, Anlegen, Bearbeiten und Löschen.
+Fotos, Dashboard, Versandvorlagen und CSV folgen. Einrichtung mit Xcode und XcodeGen steht in [`ios/README.md`](ios/README.md).
+
+Die App kann sich noch nicht anmelden. Mit gesetztem `APP_PASSWORD` bekommt sie nur „Nicht angemeldet“ (401).
 
 ## Funktionen
 
@@ -244,6 +259,7 @@ Einstellungen → Sicherheit abmeldest oder das Passwort änderst (das meldet ü
 | Methode | Pfad | Zweck |
 |---|---|---|
 | GET | `/api/items` | alle Artikel inkl. Bilder |
+| GET | `/api/items/:id` | ein Artikel inkl. Bilder |
 | POST | `/api/items` | Artikel anlegen |
 | PUT | `/api/items/:id` | Artikel ändern |
 | POST | `/api/items/:id/duplicate` | Kopie anlegen: Beschreibung, Einkaufsdaten, Einstellpreis, Notizen und Fotos werden übernommen, Status `lager`, Verkaufs- und Versanddaten leer; Antwort `{ id, images, skippedImages }` |
@@ -265,3 +281,4 @@ Einstellungen → Sicherheit abmeldest oder das Passwort änderst (das meldet ü
 | GET | `/api/backups/:name` | eine dieser Sicherungen herunterladen |
 | POST | `/api/import.csv` | Artikel aus CSV importieren; Body ist die Datei als Text (`Content-Type: text/csv`, max. 5 MB und 5000 Zeilen). `?dry=1` prüft nur und legt nichts an (Vorschau), `?skipDuplicates=0` importiert auch mögliche Duplikate. Antwort: erkannte Spalten, Anzahl gültig/Duplikate/Fehler, Fehler und Hinweise mit Zeilennummer, Beispielzeilen |
 | GET/PUT | `/api/settings` | Einstellungen lesen / ändern (`default_period`, `dead_days`, `monthly_goal`; PUT nimmt auch einzelne Felder) |
+| GET | `/healthz` | Healthcheck für Docker (`{ok: true}`), auch mit Passwortschutz ohne Anmeldung erreichbar |
