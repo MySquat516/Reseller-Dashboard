@@ -103,6 +103,13 @@ const ITEM_SORTS = {
   standing: (a, b) => (standingDays(b) ?? -1) - (standingDays(a) ?? -1) || b.id - a.id   // verkaufte Artikel ans Ende
 };
 
+// Gewählte Sortierung merken (nur im Browser; ohne Speicher gilt der Standard)
+const sortStore = {
+  get() { try { return localStorage.getItem('rd-items-sort'); } catch { return null; } },
+  set(v) { try { localStorage.setItem('rd-items-sort', v); } catch { /* Speicher nicht verfügbar */ } }
+};
+if (ITEM_SORTS[sortStore.get()]) $('#f-sort').value = sortStore.get();
+
 function renderItems() {
   // Mehrere Suchwörter müssen alle vorkommen (in beliebiger Reihenfolge und Feld)
   const words = $('#f-search').value.toLowerCase().split(/\s+/).filter(Boolean);
@@ -140,7 +147,7 @@ function fillDatalists() {
 
 $('#f-search').addEventListener('input', renderItems);
 $('#f-status').addEventListener('change', renderItems);
-$('#f-sort').addEventListener('change', () => { store.set('rd-items-sort', $('#f-sort').value); renderItems(); });
+$('#f-sort').addEventListener('change', () => { sortStore.set($('#f-sort').value); renderItems(); });
 $('#items-list').addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
   const el = e.target.closest('.item[data-id]');
@@ -524,10 +531,6 @@ const store = {
   get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* Speicher nicht verfügbar */ } }
 };
-{   // gemerkte Sortierung der Artikelliste
-  const saved = store.get('rd-items-sort', 'newest');
-  if (ITEM_SORTS[saved]) $('#f-sort').value = saved;
-}
 let period = store.get('rd-period', 'all');
 if (!['month', '3m', 'year', 'all'].includes(period)) period = 'all';
 let deadDays = Number(store.get('rd-dead', 60));
