@@ -323,3 +323,10 @@ ol.rank .t { min-width: 0; overflow-wrap: anywhere; }
 ol.rank .t small { display: block; color: var(--muted); }
 ol.rank .v { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
 @media (max-width: 640px) { #sales-table .col-opt { display: none; } }
+
+/* Artikel duplizieren, Trefferzahl */
+.dlg-dup { width: 100%; margin-top: 16px; }
+.dlg-dup-hint { margin: 6px 0 0; }
+.dlg-dup + .dlg-dup-hint + .dlg-delete { margin-top: 12px; }
+#items-count { margin: -6px 0 10px; min-height: 1.2em; }
+.filters select { flex: 0 1 auto; }

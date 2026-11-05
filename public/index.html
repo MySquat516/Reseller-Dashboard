@@ -112,7 +112,16 @@
         <option value="versendet">Versendet</option>
         <option value="verkauft">Verkauft (abgeschlossen)</option>
       </select>
+      <select id="f-sort" aria-label="Sortierung">
+        <option value="newest">Zuletzt angelegt</option>
+        <option value="oldest">Zuerst angelegt</option>
+        <option value="title">Titel A–Z</option>
+        <option value="price_desc">Einkaufspreis: hoch zu niedrig</option>
+        <option value="price_asc">Einkaufspreis: niedrig zu hoch</option>
+        <option value="standing">Längste Standzeit zuerst</option>
+      </select>
     </div>
+    <p class="hint" id="items-count" role="status" aria-live="polite"></p>
     <div id="items-list" class="items" aria-busy="true"><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article><article class="item skel-item" aria-hidden="true"><div class="img skel"></div><div class="body"><span class="skel" style="width:70px;height:18px;border-radius:99px"></span><span class="skel" style="width:75%;height:16px"></span><span class="skel" style="width:50%;height:12px"></span><span class="skel" style="width:90%;height:14px"></span></div></article></div>
   </section>
 </main>
@@ -217,6 +226,8 @@
     <datalist id="dl-platform"><option>Vinted</option><option>eBay</option><option>Kleinanzeigen</option><option>Depop</option><option>Etsy</option><option>Flohmarkt</option></datalist>
     <datalist id="dl-carrier"><option>DHL</option><option>Deutsche Post</option><option>Hermes</option><option>DPD</option><option>GLS</option><option>UPS</option></datalist>
     <datalist id="dl-payment"><option>PayPal</option><option>Überweisung</option><option>Bar</option><option>Vinted Wallet</option><option>Klarna</option></datalist>
+    <button type="button" class="dlg-dup" id="btn-duplicate" hidden>Als Kopie anlegen</button>
+    <p class="hint dlg-dup-hint" id="dup-hint" hidden>Kopiert den gespeicherten Stand samt Fotos. Status, Verkaufs- und Versanddaten bleiben leer.</p>
     <button type="button" class="danger dlg-delete" id="btn-delete" hidden>Artikel löschen</button>
     </div>
   </form>

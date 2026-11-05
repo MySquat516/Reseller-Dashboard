@@ -173,6 +173,41 @@ app.put('/api/items/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Kopie eines Artikels: Beschreibung, Einkaufsdaten, Einstellpreis, Notizen und Fotos werden übernommen.
+// Status, Verkaufs- und Versanddaten bleiben leer (Status "lager"), damit die Kopie wie ein neuer Artikel startet.
+app.post('/api/items/:id/duplicate', (req, res) => {
+  const src = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
+  if (!src) return res.status(404).json({ error: 'Nicht gefunden' });
+  const data = {
+    title: src.title.replace(/ \(Kopie(?: \d+)?\)$/, '') + ' (Kopie)',
+    description: src.description, size: src.size, category: src.category, brand: src.brand, condition: src.condition,
+    status: 'lager', purchase_price: src.purchase_price, purchase_date: src.purchase_date, listing_price: src.listing_price, notes: src.notes
+  };
+  // Fotos zuerst kopieren; fehlt eine Datei, wird sie übersprungen und gemeldet
+  const copied = [];
+  let skipped = 0;
+  for (const img of db.prepare('SELECT filename FROM images WHERE item_id = ? ORDER BY position, id').all(src.id)) {
+    const name = crypto.randomBytes(12).toString('hex') + path.extname(img.filename);
+    try {
+      fs.copyFileSync(path.join(UPLOAD_DIR, img.filename), path.join(UPLOAD_DIR, name), fs.constants.COPYFILE_FICLONE);
+      copied.push(name);
+    } catch { skipped++; }
+  }
+  try {
+    const id = db.transaction(() => {
+      const cols = Object.keys(data);
+      const newId = Number(db.prepare(`INSERT INTO items (${cols.join(',')}) VALUES (${cols.map(c => '@' + c).join(',')})`).run(data).lastInsertRowid);
+      const ins = db.prepare('INSERT INTO images (item_id, filename, position) VALUES (?,?,?)');
+      copied.forEach((name, i) => ins.run(newId, name, i + 1));
+      return newId;
+    })();
+    res.status(201).json({ id, images: copied.length, skippedImages: skipped });
+  } catch (err) {
+    copied.forEach(name => fs.unlink(path.join(UPLOAD_DIR, name), () => {}));
+    throw err;
+  }
+});
+
 app.delete('/api/items/:id', (req, res) => {
   const files = db.prepare('SELECT filename FROM images WHERE item_id = ?').all(req.params.id);
   const info = db.prepare('DELETE FROM items WHERE id = ?').run(req.params.id);
