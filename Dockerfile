@@ -4,7 +4,7 @@ WORKDIR /app
 # package-lock.json mitkopieren + npm ci: jeder Build nutzt exakt die getesteten Versionen
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
-COPY server.js backup.js ./
+COPY server.js backup.js auth.js ./
 COPY public ./public
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod 755 /usr/local/bin/docker-entrypoint.sh

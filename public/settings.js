@@ -114,3 +114,16 @@ $('#restore-file').addEventListener('change', async e => {
     buttons.forEach(b => b.removeAttribute('disabled'));
   }
 });
+
+// ---------- Sicherheit (Passwortschutz) ----------
+async function loadSession() {
+  try {
+    const s = await api('/api/session');
+    $('#sec-on').hidden = !s.auth;
+    $('#sec-off').hidden = s.auth;
+    if (s.auth) $('#sec-user').textContent = s.user;
+  } catch { /* nicht kritisch: Karte bleibt leer */ }
+}
+$('#btn-logout').addEventListener('click', async () => {
+  try { await fetch('/api/logout', { method: 'POST' }); } finally { location.href = '/login'; }
+});

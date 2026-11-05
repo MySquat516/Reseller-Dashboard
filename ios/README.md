@@ -58,7 +58,9 @@ einstellen. Zusätzlich in den Target-Einstellungen unter **Info**:
   Ausnahme entfernen.
 - **Kostenlose Apple-ID:** Die App läuft 7 Tage und muss dann neu aus Xcode installiert werden.
   Mit dem Apple Developer Program (99 $/Jahr) gibt es TestFlight: Updates ohne Kabel, Builds halten 90 Tage.
-- **Kein Login:** Wie die Webapp hat auch die App keinen eigenen Login. Der Server gehört nur ins Heimnetz/VPN.
+- **Kein Login:** Die App hat noch keine Anmeldung. Der Server gehört ins Heimnetz/VPN. Der optionale Passwortschutz des Servers
+  (`APP_PASSWORD`) funktioniert mit der App erst, wenn sie die Anmeldung kann (geplant zusammen mit der Face-ID-Sperre);
+  bis dahin den Passwortschutz nicht einschalten, wenn du die App nutzt.
 
 ## Aufbau
 

@@ -16,6 +16,8 @@ services:
       # Optional (siehe README, Abschnitt Backup):
       # BACKUP_KEEP: 14             # Tage automatischer Sicherungen
       # BACKUP_AUTO: 0              # 0 = tägliche Sicherung aus
+      # APP_PASSWORD: ein-langes-passwort   # schaltet den Passwortschutz ein (siehe README)
+      # APP_USER: admin
     volumes:
       - ./data:/data              # SQLite-Datenbank (reseller.db) und hochgeladene Bilder (uploads/)
     # Healthcheck steckt bereits im Image (Dockerfile) und fragt /healthz ab.

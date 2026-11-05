@@ -365,3 +365,6 @@ a.btn.primary { background: var(--accent); border-color: var(--accent); color: v
 .bk-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
 .bk-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .bk-actions .btn, .bk-actions button { flex: 1 1 100%; justify-content: center; } }
+
+#card-security p { margin: 0 0 10px; }
+#card-security code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: .92em; }

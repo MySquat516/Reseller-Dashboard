@@ -177,6 +177,20 @@
         <p class="hint" id="bk-auto-hint"></p>
         <div id="bk-list"></div>
       </div>
+
+      <div class="card" id="card-security">
+        <h3>Sicherheit</h3>
+        <div id="sec-on" hidden>
+          <p>Angemeldet als <strong id="sec-user"></strong>. Der Zugang ist mit einem Passwort geschützt.</p>
+          <button type="button" id="btn-logout">Abmelden</button>
+        </div>
+        <div id="sec-off" hidden>
+          <p><strong>Passwortschutz: aus.</strong> Die App ist ohne Anmeldung erreichbar. Das ist im Heimnetz oder per VPN in Ordnung.</p>
+          <p class="hint">Zum Einschalten in der <code>docker-compose.yml</code> unter <code>environment</code> ein Passwort setzen
+            (<code>APP_PASSWORD: dein-passwort</code>, optional <code>APP_USER</code>) und den Container neu starten.
+            Danach meldest du dich auf dem iPhone bequem per Face ID über den Passwortmanager an.</p>
+        </div>
+      </div>
     </div>
   </section>
 </main>

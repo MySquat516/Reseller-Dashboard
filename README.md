@@ -151,8 +151,31 @@ ungeschützt ins Internet.
 
 ## Hinweis
 
-Die App hat keinen Login. Betreibe sie nur im Heimnetz oder hinter einem Reverse Proxy mit Authentifizierung
-(z. B. Authelia, Basic Auth in Nginx Proxy Manager oder Traefik).
+Standardmäßig hat die App keinen Login. Betreibe sie dann nur im Heimnetz oder per VPN. Für alles darüber hinaus
+gibt es einen **optionalen Passwortschutz** (siehe unten), idealerweise zusätzlich hinter HTTPS (Reverse Proxy).
+
+### Passwortschutz (optional)
+
+Er ist aus, solange `APP_PASSWORD` nicht gesetzt ist. In der `docker-compose.yml` unter `environment`:
+
+```yaml
+      APP_PASSWORD: ein-langes-passwort
+      # APP_USER: admin          # Benutzername, Standard: admin
+```
+
+Danach zeigt jede Seite zuerst eine Anmeldeseite. Die Anmeldung gilt 90 Tage (Cookie bzw. Token), bis du dich unter
+Einstellungen → Sicherheit abmeldest oder das Passwort änderst (das meldet überall ab).
+
+- **Face ID am iPhone:** Die Anmeldeseite ist ein normales Formular mit Benutzername und Passwort. Speicherst du sie im
+  iPhone-Passwortmanager, füllt Safari sie nach einer Face-ID-Prüfung aus.
+- Nach 5 falschen Versuchen sperrt der Server die Anmeldung für 5 Minuten. Das Passwort wird nur zeitkonstant verglichen.
+- Ohne HTTPS laufen Passwort und Cookie im Klartext durchs Netz (im WireGuard-VPN ist das verschlüsselt).
+  Hinter einem HTTPS-Proxy bekommt das Cookie automatisch das `Secure`-Flag (Header `X-Forwarded-Proto`).
+- Öffentlich bleiben nur die Anmeldeseite, `/healthz`, das Logo und die Icons.
+- Optional: `SESSION_DAYS` (Standard 90) und `SESSION_SECRET` (Standard: zufälliger Wert in `data/session-secret`).
+- Für Skripte und Apps: `POST /api/login` mit `{"username": …, "password": …}` liefert ein Cookie und ein Token,
+  das als `Authorization: Bearer <token>` mitgeschickt werden kann. Die iOS-App unterstützt die Anmeldung noch nicht
+  (geplant zusammen mit der Face-ID-Sperre); bis dahin den Passwortschutz nur einschalten, wenn du die iOS-App nicht nutzt.
 
 ## API
 
@@ -170,6 +193,9 @@ Die App hat keinen Login. Betreibe sie nur im Heimnetz oder hinter einem Reverse
 | GET | `/api/export.csv` | alle Artikel als CSV |
 | GET/POST | `/api/shipping-presets` | Versandvorlagen auflisten / anlegen |
 | PUT/DELETE | `/api/shipping-presets/:id` | Versandvorlage ändern / löschen |
+| POST | `/api/login` | Anmelden (nur mit `APP_PASSWORD`): Cookie und Token |
+| POST | `/api/logout` | Abmelden |
+| GET | `/api/session` | `{auth, user}`: ist der Passwortschutz aktiv, und wer ist angemeldet |
 | GET | `/api/backup` | vollständiges Backup (ZIP mit Datenbank und Fotos) herunterladen |
 | POST | `/api/restore` | Backup einspielen (multipart, Feld `backup`: ZIP oder `.db`), ersetzt alle Daten |
 | GET | `/api/backups` | Liste der Sicherungen im Ordner `backups` (automatisch und vor dem Einspielen) |

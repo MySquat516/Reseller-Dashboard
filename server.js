@@ -144,6 +144,8 @@ app.get('/healthz', (req, res) => {
     res.status(503).json({ ok: false });
   }
 });
+// Optionaler Passwortschutz (nur mit APP_PASSWORD); muss vor allen anderen Routen stehen
+require('./auth')({ app, DATA_DIR, publicDir: path.join(__dirname, 'public') });
 app.use(express.json({ limit: '1mb' }));
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', index: false }));
 app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
@@ -557,13 +559,19 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
+require('./backup')({ app, db, DATA_DIR, UPLOAD_DIR, sniffImageExt });
+
 app.use((err, req, res, next) => {
-  console.error(err);
   if (err instanceof multer.MulterError) return res.status(400).json({ error: 'Upload-Fehler: ' + err.message });
+  // Fehler des Aufrufers (kaputtes JSON, zu großer Body) sind keine Serverfehler
+  if (err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({
+      error: err.type === 'entity.parse.failed' ? 'Ungültiges JSON' : err.type === 'entity.too.large' ? 'Anfrage zu groß' : (err.message || 'Ungültige Anfrage')
+    });
+  }
+  console.error(err);
   res.status(500).json({ error: err.message || 'Serverfehler' });
 });
-
-require('./backup')({ app, db, DATA_DIR, UPLOAD_DIR, sniffImageExt });
 
 const server = app.listen(PORT, () => console.log(`Reseller-Dashboard läuft auf Port ${PORT}`));
 // Große Backups über langsames WLAN dürfen länger als die Standard-5-Minuten brauchen
