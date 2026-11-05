@@ -1,0 +1,29 @@
+name: iOS
+
+# Baut die App und führt die Unit-Tests auf einem macOS-Runner aus (nur wenn sich ios/ ändert).
+on:
+  push:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: XcodeGen installieren
+        run: brew install xcodegen
+      - name: Projekt erzeugen
+        working-directory: ios
+        run: xcodegen generate
+      - name: Bauen und testen
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ResellerApp.xcodeproj \
+            -scheme ResellerApp \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            CODE_SIGNING_ALLOWED=NO | tail -n 80

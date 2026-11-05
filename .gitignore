@@ -2,3 +2,10 @@ node_modules/
 data/
 *.log
 .DS_Store
+
+# iOS (Projekt wird mit XcodeGen aus ios/project.yml erzeugt)
+ios/ResellerApp.xcodeproj/
+ios/ResellerApp/Info.plist
+xcuserdata/
+DerivedData/
+.build/
