@@ -355,3 +355,13 @@ body[data-view="settings"] #btn-new { display: none; }
   .ship-row:not(.ship-edit) { flex-wrap: wrap; justify-content: flex-end; }
   .ship-row:not(.ship-edit) .grow { flex: 1 1 100%; }
 }
+
+/* Backup */
+.bk-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 8px; }
+a.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+#card-backup h4 { margin: 18px 0 4px; font-size: 0.824rem; }
+#bk-progress { width: 100%; height: 8px; margin: 6px 0; accent-color: var(--accent); }
+#bk-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.bk-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.bk-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .bk-actions .btn, .bk-actions button { flex: 1 1 100%; justify-content: center; } }

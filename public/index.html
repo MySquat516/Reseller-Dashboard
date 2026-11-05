@@ -161,6 +161,22 @@
           <button class="primary" type="submit">Hinzufügen</button>
         </form>
       </div>
+
+      <div class="card" id="card-backup">
+        <h3>Daten &amp; Backup</h3>
+        <p class="hint">Ein Backup enthält alle Artikel, Einstellungen, Versandvorlagen und Fotos in einer ZIP-Datei.</p>
+        <div class="banner error" id="bk-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
+        <div class="bk-actions">
+          <a class="btn primary" id="btn-backup" href="/api/backup" download>⬇ Backup herunterladen</a>
+          <button type="button" id="btn-restore">Backup einspielen …</button>
+          <input type="file" id="restore-file" accept=".zip,.db,application/zip" hidden>
+        </div>
+        <progress id="bk-progress" max="100" value="0" hidden aria-label="Fortschritt"></progress>
+        <p class="hint" id="bk-status" role="status" aria-live="polite"></p>
+        <h4>Automatische Sicherungen auf dem Server</h4>
+        <p class="hint" id="bk-auto-hint"></p>
+        <div id="bk-list"></div>
+      </div>
     </div>
   </section>
 </main>

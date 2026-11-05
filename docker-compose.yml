@@ -13,6 +13,9 @@ services:
       - "${PORT:-3000}:3000"      # anderer Host-Port: PORT=8080 docker compose up -d
     environment:
       TZ: Europe/Berlin
+      # Optional (siehe README, Abschnitt Backup):
+      # BACKUP_KEEP: 14             # Tage automatischer Sicherungen
+      # BACKUP_AUTO: 0              # 0 = tägliche Sicherung aus
     volumes:
       - ./data:/data              # SQLite-Datenbank (reseller.db) und hochgeladene Bilder (uploads/)
     # Healthcheck steckt bereits im Image (Dockerfile) und fragt /healthz ab.

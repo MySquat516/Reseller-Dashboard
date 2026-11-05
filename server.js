@@ -563,4 +563,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Serverfehler' });
 });
 
-app.listen(PORT, () => console.log(`Reseller-Dashboard läuft auf Port ${PORT}`));
+require('./backup')({ app, db, DATA_DIR, UPLOAD_DIR, sniffImageExt });
+
+const server = app.listen(PORT, () => console.log(`Reseller-Dashboard läuft auf Port ${PORT}`));
+// Große Backups über langsames WLAN dürfen länger als die Standard-5-Minuten brauchen
+server.requestTimeout = 30 * 60 * 1000;
