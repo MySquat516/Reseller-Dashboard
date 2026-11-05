@@ -70,6 +70,10 @@ ungeschützt ins Internet.
 - CSV-Export aller Artikel (Excel-tauglich: UTF-8, Semikolon, Dezimalkomma) über den Button in der Artikelliste
 - Dashboard mit Zeitraum-Schalter (Dieser Monat, 3 Monate, Dieses Jahr, Alles):
   Gewinn, Umsatz, Marge, ROI, Standzeit, Preisabschlag, Auswertung nach Plattform, Zahlungsart, Kategorie und Marke
+- Zusatzkennzahlen (für den gewählten Zeitraum): Trefferquote, Ø Gewinn je Gewinn- und Ø Verlust je Verlust-Verkauf,
+  Gewinn pro Standtag, Ø Verkaufspreis und erwarteter Gewinn der offenen Posten (bei Verkauf zum Einstellpreis)
+- Verkäufe-Ansicht: sortierbare Tabelle mit Summenzeile, Suche und Plattform-Filter, beste und schwächste Verkäufe;
+  ein Klick auf eine Zeile öffnet den Artikel
 - Monatskachel: Gewinn des aktuellen Monats im Vergleich zum Vormonat bis zum gleichen Tag
 - Monatsübersicht als Diagramm und Tabelle (inkl. Monate ohne Verkäufe)
 - Immer aktuell, unabhängig vom Zeitraum: Lagerwert, Bestand, offene Zahlungen und Ladenhüter
@@ -102,6 +106,7 @@ Die App hat keinen Login. Betreibe sie nur im Heimnetz oder hinter einem Reverse
 | DELETE | `/api/images/:id` | einzelnes Bild löschen |
 | PUT | `/api/items/:id/images/order` | Bildreihenfolge speichern |
 | GET | `/api/stats?period=month\|3m\|year\|all&dead=30\|60\|90` | Kennzahlen fürs Dashboard |
+| GET | `/api/sales?period=month\|3m\|year\|all` | alle Verkäufe im Zeitraum mit Gewinn, Marge und Standzeit |
 | GET | `/api/export.csv` | alle Artikel als CSV |
 | GET/POST | `/api/shipping-presets` | Versandvorlagen auflisten / anlegen |
 | PUT/DELETE | `/api/shipping-presets/:id` | Versandvorlage ändern / löschen |
