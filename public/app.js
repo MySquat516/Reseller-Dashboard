@@ -49,6 +49,10 @@ $('#cf-cancel').addEventListener('click', () => $('#dlg-confirm').close('cancel'
 async function api(url, opts = {}) {
   let res;
   try { res = await fetch(url, opts); } catch { throw new Error('Keine Verbindung zum Server'); }
+  if (res.status === 401) {   // Sitzung abgelaufen oder Passwortschutz neu eingeschaltet
+    location.replace('/login?next=' + encodeURIComponent(location.pathname));
+    throw new Error('Nicht angemeldet');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || res.statusText);
@@ -73,7 +77,7 @@ function showView(v) {
   document.body.dataset.view = v;
   if (v === 'dashboard') loadStats();
   if (v === 'sales') loadSales();
-  if (v === 'settings') { renderSettingsView(); loadBackups(); }
+  if (v === 'settings') { renderSettingsView(); loadBackups(); loadSession(); }
 }
 
 // Nach dem Speichern oder Löschen die gerade sichtbare Auswertung neu laden
