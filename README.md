@@ -104,6 +104,9 @@ ungeschützt ins Internet.
   Gewinn pro Standtag, Ø Verkaufspreis und erwarteter Gewinn der offenen Posten (bei Verkauf zum Einstellpreis)
 - Verkäufe-Ansicht: sortierbare Tabelle mit Summenzeile, Suche und Plattform-Filter, beste und schwächste Verkäufe;
   ein Klick auf eine Zeile öffnet den Artikel
+- Analyse-Diagramme in der Verkäufe-Ansicht (für den gewählten Zeitraum): kumulierter Gewinn über die Zeit, Streudiagramm Einkaufs- gegen
+  Verkaufspreis je Artikel (Gewinn als Kreis, Verlust als Dreieck, Linie „Verkauf = Einkauf“) und Gewinn nach Plattform, Kategorie oder Marke;
+  zu Verlauf und Gruppen gibt es die Werte auch als Tabelle
 - Monatskachel: Gewinn des aktuellen Monats im Vergleich zum Vormonat bis zum gleichen Tag
 - Monatsübersicht als Diagramm und Tabelle (inkl. Monate ohne Verkäufe)
 - Immer aktuell, unabhängig vom Zeitraum: Lagerwert, Bestand, offene Zahlungen und Ladenhüter

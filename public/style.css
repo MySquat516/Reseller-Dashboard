@@ -59,7 +59,7 @@ button, .tab, .item, .thumb { touch-action: manipulation; -webkit-tap-highlight-
 .kpi .sub { color: var(--muted); font-size: 0.765rem; margin-top: 2px; }
 .pos { color: var(--good); } .neg { color: var(--bad); }
 
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 14px; }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; min-width: 0; }
 .card.wide { grid-column: 1 / -1; }
 .card h3 { margin: 0 0 12px; font-size: 0.824rem; color: var(--muted); font-weight: 600; }
@@ -323,3 +323,13 @@ ol.rank .t { min-width: 0; overflow-wrap: anywhere; }
 ol.rank .t small { display: block; color: var(--muted); }
 ol.rank .v { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
 @media (max-width: 640px) { #sales-table .col-opt { display: none; } }
+
+/* Verkäufe: Analyse-Diagramme */
+#sales-charts { margin-bottom: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 760px) { #sales-charts { grid-template-columns: minmax(0, 1fr); } }
+#sales-charts .card canvas#ch-scatter { max-height: 380px; }
+#sales-charts[hidden] { display: none; }
+.chart-table { margin-top: 10px; }
+.chart-table summary { cursor: pointer; color: var(--muted); font-size: 0.765rem; }
+.chart-table .scroll-x { max-height: 260px; overflow: auto; margin-top: 8px; }
+#sales-charts .hint { margin: 8px 0 0; }
