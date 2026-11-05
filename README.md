@@ -63,6 +63,10 @@ und unter demselben Namen wie das fertige Image abgelegt.
 Alle Daten (Datenbank `reseller.db` und Bilder in `uploads/`) liegen im Ordner `./data`.
 Backup = diesen Ordner kopieren.
 
+Der Container läuft aus Sicherheitsgründen nicht als root, sondern als Benutzer `node`. Beim ersten Start nach einem
+Update setzt er den Besitzer von `./data` automatisch darauf (einmalig, das kann bei vielen Fotos kurz dauern).
+Ob die App gesund ist, zeigt `docker ps` (Status `healthy`); sie fragt dafür `/healthz` ab.
+
 ## Starten ohne Docker
 
 ```bash

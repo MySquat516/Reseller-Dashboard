@@ -1,4 +1,9 @@
 const $ = (s, el = document) => el.querySelector(s);
+// Heutiges Datum in lokaler Zeit (toISOString() liefert UTC und ist nach Mitternacht noch "gestern")
+const todayLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const eur = n => (n == null ? '–' : n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }));
 const pct = n => (n == null ? '–' : (n * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %');
 const num1 = n => (n == null ? '–' : n.toLocaleString('de-DE', { maximumFractionDigits: 1 }));
@@ -326,7 +331,7 @@ form.elements.sold_price.addEventListener('change', () => {
   const s = form.elements.status;
   if (form.elements.sold_price.value !== '' && ['lager', 'online', 'reserviert'].includes(s.value)) {
     s.value = 'zu_versenden';
-    if (!form.elements.sold_date.value) form.elements.sold_date.value = new Date().toISOString().slice(0, 10);
+    if (!form.elements.sold_date.value) form.elements.sold_date.value = todayLocal();
   }
 });
 
