@@ -304,6 +304,43 @@ const sumUp = list => ({
   profit: list.reduce((s, i) => s + profitOf(i), 0)
 });
 
+// Eine Zeile pro Verkauf, gemeinsam genutzt von /api/stats und /api/sales
+function saleRow(it) {
+  const profit = profitOf(it);
+  const days = it.listed_date && it.sold_date ? dayDiff(it.listed_date, it.sold_date) : null;
+  return {
+    id: it.id, title: it.title, category: it.category || '', brand: it.brand || '', platform: it.platform || '',
+    status: it.status, payment_status: it.payment_status,
+    purchase_price: it.purchase_price || 0, sold_price: it.sold_price,
+    fees: it.fees || 0, shipping_cost: it.shipping_cost || 0,
+    profit, margin: it.sold_price ? profit / it.sold_price : null,
+    sold_date: soldDay(it), listed_date: it.listed_date || null,
+    standtime: days != null && days >= 0 ? days : null
+  };
+}
+
+const mean = list => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+
+app.get('/api/sales', (req, res) => {
+  const period = PERIODS.includes(req.query.period) ? req.query.period : 'all';
+  const from = periodStart(period, new Date());
+  const rows = db.prepare('SELECT * FROM items').all()
+    .filter(i => SOLD_STATUSES.includes(i.status) && i.sold_price != null && (!from || soldDay(i) >= from))
+    .map(saleRow)
+    .sort((a, b) => b.sold_date.localeCompare(a.sold_date) || b.id - a.id);
+  res.json({
+    period, from,
+    totals: {
+      count: rows.length,
+      revenue: rows.reduce((s, r) => s + r.sold_price, 0),
+      cost: rows.reduce((s, r) => s + r.purchase_price, 0),
+      fees: rows.reduce((s, r) => s + r.fees + r.shipping_cost, 0),
+      profit: rows.reduce((s, r) => s + r.profit, 0)
+    },
+    sales: rows
+  });
+});
+
 app.get('/api/stats', (req, res) => {
   const period = PERIODS.includes(req.query.period) ? req.query.period : 'all';
   const deadDays = DEAD_DAYS.includes(Number(req.query.dead)) ? Number(req.query.dead) : 60;
@@ -365,6 +402,14 @@ app.get('/api/stats', (req, res) => {
 
   const priceDiffs = sold.filter(i => i.listing_price).map(i => i.sold_price - i.listing_price);
 
+  // Zusatzkennzahlen für den gewählten Zeitraum
+  const rows = sold.map(saleRow);
+  const wins = rows.filter(r => r.profit > 0);
+  const losses = rows.filter(r => r.profit < 0);
+  const timed = rows.filter(r => r.standtime != null);
+  const timedDays = timed.reduce((s, r) => s + Math.max(r.standtime, 1), 0);
+  const priced = unsold.filter(i => i.listing_price != null);
+
   const deadAll = unsold
     .filter(i => i.status !== 'reserviert') // reservierte Artikel sind so gut wie verkauft
     .map(i => ({
@@ -387,7 +432,18 @@ app.get('/api/stats', (req, res) => {
       stockValue: unsold.reduce((s, i) => s + (i.purchase_price || 0), 0),
       openPayments: soldAll.filter(i => i.payment_status !== 'bezahlt').reduce((s, i) => s + i.sold_price, 0),
       avgStandtime: standtimes.length ? standtimes.reduce((a, b) => a + b, 0) / standtimes.length : null,
-      avgPriceDiff: priceDiffs.length ? priceDiffs.reduce((a, b) => a + b, 0) / priceDiffs.length : null
+      avgPriceDiff: priceDiffs.length ? priceDiffs.reduce((a, b) => a + b, 0) / priceDiffs.length : null,
+      winners: wins.length,
+      losers: losses.length,
+      hitRate: rows.length ? wins.length / rows.length : null,            // Anteil Verkäufe mit Gewinn > 0
+      avgWin: mean(wins.map(r => r.profit)),
+      avgLoss: mean(losses.map(r => r.profit)),                            // negativ
+      profitPerStandDay: timedDays ? timed.reduce((s, r) => s + r.profit, 0) / timedDays : null,
+      avgSalePrice: rows.length ? revenue / rows.length : null,
+      // Offene Posten: Gewinn, wenn alles zum Einstellpreis verkauft wird (nur Artikel mit Einstellpreis)
+      openExpectedProfit: priced.reduce((s, i) => s + i.listing_price - (i.purchase_price || 0), 0),
+      openPricedCount: priced.length,
+      openUnpricedCount: unsold.length - priced.length
     },
     thisMonth,
     monthly: monthlyList,
