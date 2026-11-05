@@ -88,6 +88,30 @@
       </div>
     </div>
     <div class="kpis" id="sales-kpis"></div>
+    <div class="grid sales-charts" id="sales-charts" hidden>
+      <div class="card wide">
+        <h3>Kumulierter Gewinn</h3>
+        <canvas id="ch-cum"></canvas>
+        <details class="chart-table"><summary>Werte als Tabelle</summary><div class="scroll-x" id="cum-table"></div></details>
+      </div>
+      <div class="card">
+        <h3>Einkauf und Verkauf je Artikel</h3>
+        <canvas id="ch-scatter"></canvas>
+        <p class="hint">Jeder Punkt ist ein Verkauf (Tabelle weiter unten). Über der Linie wurde teurer verkauft als eingekauft, vor Gebühren und Versand.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Gewinn nach</h3>
+          <select id="sc-group" aria-label="Gruppieren nach">
+            <option value="platform">Plattform</option>
+            <option value="category">Kategorie</option>
+            <option value="brand">Marke</option>
+          </select>
+        </div>
+        <canvas id="ch-group"></canvas>
+        <details class="chart-table"><summary>Werte als Tabelle</summary><div class="scroll-x" id="group-table"></div></details>
+      </div>
+    </div>
     <div class="grid">
       <div class="card"><h3>Beste Verkäufe</h3><div id="sales-best"></div></div>
       <div class="card"><h3>Schwächste Verkäufe</h3><div id="sales-worst"></div></div>
@@ -414,6 +438,7 @@
 <script src="/vendor/chart.js/chart.umd.js"></script>
 <script src="app.js"></script>
 <script src="sales.js"></script>
+<script src="analysis.js"></script>
 <script src="settings.js"></script>
 <script src="csv.js"></script>
 <script src="import.js"></script>
