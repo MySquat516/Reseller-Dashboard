@@ -1,5 +1,9 @@
 services:
   reseller:
+    # Fertiges Image aus der GitHub Container Registry (wird bei jedem Push auf main automatisch gebaut).
+    # Update: docker compose pull && docker compose up -d
+    image: ghcr.io/mysquat516/reseller-dashboard:latest
+    # Fallback: selbst bauen mit  docker compose up -d --build
     build:
       context: .
       network: host               # <--- Zwingt den Build, dein echtes Internet/DNS zu nutzen
