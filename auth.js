@@ -99,8 +99,10 @@ module.exports = function setupAuth({ app, DATA_DIR, publicDir }) {
     const wait = blockedFor(ip);
     if (wait) return { status: 429, retry: wait, error: `Zu viele Versuche. Bitte in ${Math.ceil(wait / 60)} Min. erneut probieren.` };
     const b = req.body || {};
-    const okUser = safeEqual(b.username ?? '', USER);
-    const okPass = safeEqual(b.password ?? '', PASSWORD);
+    // Nur Texte vergleichen: sonst würde z. B. {"password": ["geheim"]} (Liste) zu "geheim" umgewandelt und passen
+    const str = v => (typeof v === 'string' ? v : '');
+    const okUser = safeEqual(str(b.username), USER);
+    const okPass = safeEqual(str(b.password), PASSWORD);
     if (okUser && okPass) { fails.delete(ip); return { token: makeToken() }; }
     noteFail(ip);
     return { status: 401, error: 'Benutzername oder Passwort stimmt nicht.' };

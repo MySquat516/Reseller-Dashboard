@@ -190,7 +190,26 @@ Spalten wie ID, Gewinn und Bilder (aus dem eigenen Export) werden ignoriert, unb
 
 ## Tests
 
-`npm test` führt die automatischen Tests aus (`node --test`, keine zusätzlichen Pakete).
+`npm test` führt die automatischen Tests aus (`node --test`, keine zusätzlichen Pakete, etwa 12 Sekunden).
+
+Die Server-Tests starten pro Testdatei den **echten Server** (`node server.js`) auf einem freien Port mit einem leeren
+Temp-Datenordner und sprechen ihn über HTTP an. Deine echten Daten in `data/` werden dabei nie berührt.
+
+| Datei | Prüft |
+| --- | --- |
+| `test/items.test.js` | Artikel (Anlegen, Ändern, Eingabeprüfung, kaputtes JSON), Kopieren, Versandvorlagen, Einstellungen, Foto-Upload (Dateikopf-Prüfung, Reihenfolge, Löschen) |
+| `test/stats.test.js` | Kennzahlen und Verkaufsliste mit festem Datensatz: Gewinn, Zeiträume, Monatsliste, Ladenhüter, Verkauf ohne Datum oder Preis |
+| `test/exportimport.test.js` | CSV-Export (Format, Auswahl, Formelschutz), CSV-Import über die API, Rundlauf Export → Import |
+| `test/backup.test.js` | Backup-ZIP, Wiederherstellen (auch alte Versionen, kaputte und böswillige ZIPs), automatische Sicherung |
+| `test/auth.test.js` | Passwortschutz: gesperrte Routen, Anmelden, Token, Ablauf, Bremse bei Fehlversuchen, Weiterleitungen |
+| `test/csvimport.test.js` | Import-Logik einzeln (Zahlen, Datum, Trennzeichen, Zeichensätze) |
+| `test/packaging.test.js` | Docker-Image enthält alle Server-Dateien, Abhängigkeiten, Skripte der Oberfläche ohne Namenskonflikte |
+
+Hilfsfunktionen (Server starten, Testbilder, ZIP-Dateien) liegen in `testlib/`, nicht in `test/`, weil `node --test` jede Datei in
+`test/` als Test ausführt. Die GitHub-Action `.github/workflows/test.yml` startet die Tests bei jedem Push und Pull Request mit Node 20
+(wie im Docker-Image) und Node 22.
+
+Nicht automatisch getestet: die Oberfläche im Browser (wird von Hand geprüft) und die iOS-App (eigener Workflow `ios.yml`).
 
 ## Hinweis
 
