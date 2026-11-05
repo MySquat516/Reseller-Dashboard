@@ -178,7 +178,7 @@ a.btn { display: inline-flex; align-items: center; padding: 8px 12px; border: 1p
 
   header nav {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
-    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0;
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;
     background: var(--surface); border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -303,3 +303,23 @@ input, select, textarea { min-width: 0; max-width: 100%; }
   .kpis:not(.expanded) .kpi-extra { display: none; }
 }
 @media (max-width: 760px) { .info-btn { align-self: flex-start; margin-left: -10px; } }
+
+/* Verkäufe */
+.sales-card { margin-top: 14px; }
+.sales-card .filters { margin-bottom: 10px; }
+#sales-table th { white-space: nowrap; }
+#sales-table th button { background: transparent; border: 0; padding: 6px 2px; min-height: 36px; color: inherit; font-weight: inherit; cursor: pointer; }
+#sales-table th button:hover, #sales-table th[aria-sort] button { color: var(--text); }
+#sales-table th.r { text-align: right; }
+#sales-table tbody tr { cursor: pointer; }
+#sales-table tbody tr:hover { background: var(--surface-2); }
+button.link { background: transparent; border: 0; border-radius: 4px; padding: 4px 0; min-height: 0; text-align: left; color: var(--text); font-weight: 500; cursor: pointer; }
+button.link:hover { text-decoration: underline; }
+#sales-table .col-title { max-width: 260px; overflow-wrap: anywhere; }
+ol.rank { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+ol.rank li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--border); }
+ol.rank li:last-child { border-bottom: 0; }
+ol.rank .t { min-width: 0; overflow-wrap: anywhere; }
+ol.rank .t small { display: block; color: var(--muted); }
+ol.rank .v { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+@media (max-width: 640px) { #sales-table .col-opt { display: none; } }

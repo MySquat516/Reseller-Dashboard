@@ -23,6 +23,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>
       <span>Dashboard</span>
     </button>
+    <button class="tab" data-view="sales">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></svg>
+      <span>Verkäufe</span>
+    </button>
     <button class="tab" data-view="items">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4h8l10 10-8 8L3 12z"/><circle cx="7.5" cy="8.5" r="1"/></svg>
       <span>Artikel</span>
@@ -36,7 +40,7 @@
   <!-- Dashboard -->
   <section id="view-dashboard" aria-busy="true">
     <div class="toolbar">
-      <div class="seg" id="period" role="group" aria-label="Zeitraum">
+      <div class="seg" id="period" data-seg="period" role="group" aria-label="Zeitraum">
         <button type="button" data-period="month">Dieser Monat</button>
         <button type="button" data-period="3m">3 Monate</button>
         <button type="button" data-period="year">Dieses Jahr</button>
@@ -66,6 +70,30 @@
         <div class="hint" id="dead-summary"></div>
         <div id="tbl-dead"><div class="skel-lines"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div></div>
       </div>
+    </div>
+  </section>
+
+  <!-- Verkäufe -->
+  <section id="view-sales" hidden aria-busy="true">
+    <div class="toolbar">
+      <div class="seg" data-seg="period" role="group" aria-label="Zeitraum">
+        <button type="button" data-period="month">Dieser Monat</button>
+        <button type="button" data-period="3m">3 Monate</button>
+        <button type="button" data-period="year">Dieses Jahr</button>
+        <button type="button" data-period="all">Alles</button>
+      </div>
+    </div>
+    <div class="kpis" id="sales-kpis"></div>
+    <div class="grid">
+      <div class="card"><h3>Beste Verkäufe</h3><div id="sales-best"></div></div>
+      <div class="card"><h3>Schwächste Verkäufe</h3><div id="sales-worst"></div></div>
+    </div>
+    <div class="card sales-card">
+      <div class="filters">
+        <input id="s-search" type="search" placeholder="Suchen" aria-label="Verkäufe durchsuchen (Titel, Marke, Kategorie)" enterkeyhint="search" autocomplete="off">
+        <select id="s-platform" aria-label="Nach Plattform filtern"><option value="">Alle Plattformen</option></select>
+      </div>
+      <div id="sales-table" class="scroll-x"></div>
     </div>
   </section>
 
@@ -231,5 +259,6 @@
 
 <script src="/vendor/chart.js/chart.umd.js"></script>
 <script src="app.js"></script>
+<script src="sales.js"></script>
 </body>
 </html>

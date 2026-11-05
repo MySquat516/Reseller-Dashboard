@@ -62,8 +62,16 @@ function showView(v) {
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   $('#view-dashboard').hidden = v !== 'dashboard';
+  $('#view-sales').hidden = v !== 'sales';
   $('#view-items').hidden = v !== 'items';
   if (v === 'dashboard') loadStats();
+  if (v === 'sales') loadSales();
+}
+
+// Nach dem Speichern oder Löschen die gerade sichtbare Auswertung neu laden
+function refreshActiveView() {
+  if (!$('#view-dashboard').hidden) return loadStats();
+  if (!$('#view-sales').hidden) return loadSales();
 }
 
 // ---------- Artikelliste ----------
@@ -351,7 +359,7 @@ form.addEventListener('submit', async e => {
     }
     dlg.close();
     await loadItems();
-    if (!$('#view-dashboard').hidden) loadStats();
+    refreshActiveView();
   } catch (err) {
     showMsg('form-error', 'Speichern fehlgeschlagen: ' + err.message + '. Bitte versuch es noch einmal.');
   } finally {
@@ -374,7 +382,7 @@ $('#btn-delete').addEventListener('click', async () => {
     await api('/api/items/' + editing.id, { method: 'DELETE' });
     dlg.close();
     await loadItems();
-    if (!$('#view-dashboard').hidden) loadStats();
+    refreshActiveView();
   } catch (err) {
     showMsg('form-error', 'Löschen fehlgeschlagen: ' + err.message);
   }
@@ -552,7 +560,7 @@ function renderMonthTable(monthly) {
 }
 
 function syncControls() {
-  document.querySelectorAll('#period button').forEach(b => {
+  document.querySelectorAll('.seg[data-seg="period"] button').forEach(b => {
     const on = b.dataset.period === period;
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', String(on));
@@ -560,13 +568,14 @@ function syncControls() {
   $('#dead-days').value = String(deadDays);
 }
 
-$('#period').addEventListener('click', e => {
+document.querySelectorAll('.seg[data-seg="period"]').forEach(seg => seg.addEventListener('click', e => {
   const b = e.target.closest('button[data-period]');
   if (!b) return;
   period = b.dataset.period;
   store.set('rd-period', period);
-  loadStats();
-});
+  syncControls();
+  refreshActiveView();
+}));
 $('#dead-days').addEventListener('change', e => {
   deadDays = Number(e.target.value);
   store.set('rd-dead', String(deadDays));
@@ -601,8 +610,16 @@ async function renderStats() {
     kpi('Ø Gewinn / Artikel', eur(t.avgProfit)).replace('class="kpi"', 'class="kpi kpi-extra"'),
     kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft').replace('class="kpi"', 'class="kpi kpi-extra"'),
     kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)).replace('class="kpi"', 'class="kpi kpi-extra"'),
-    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '').replace('class="kpi"', t.openPayments > 0 ? 'class="kpi"' : 'class="kpi kpi-extra"')
-  ].join('');
+    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '').replace('class="kpi"', t.openPayments > 0 ? 'class="kpi"' : 'class="kpi kpi-extra"'),
+    // Zusatzkennzahlen (auf dem Handy hinter „Mehr Kennzahlen“)
+    kpi('Trefferquote', t.hitRate == null ? '–' : pct(t.hitRate), `${t.winners} mit Gewinn, ${t.losers} mit Verlust, ${t.sold - t.winners - t.losers} ±0`),
+    kpi('Ø Gewinn je Gewinn-Verkauf', eur(t.avgWin), 'nur Verkäufe über Einkauf + Kosten', cls(t.avgWin)),
+    kpi('Ø Verlust je Verlust-Verkauf', eur(t.avgLoss), 'nur Verkäufe unter Einkauf + Kosten', cls(t.avgLoss)),
+    kpi('Gewinn pro Standtag', t.profitPerStandDay == null ? '–' : eur(t.profitPerStandDay), 'Gewinn ÷ Tage online (mind. 1 Tag je Artikel)', cls(t.profitPerStandDay)),
+    kpi('Ø Verkaufspreis', eur(t.avgSalePrice)),
+    kpi('Erwarteter Gewinn offen', eur(t.openExpectedProfit),
+      `bei Verkauf zum Einstellpreis, ${t.openPricedCount} Artikel` + (t.openUnpricedCount ? `, ${t.openUnpricedCount} ohne Einstellpreis` : ''), cls(t.openExpectedProfit))
+  ].map((html, i) => (i >= 8 ? html.replace('class="kpi"', 'class="kpi kpi-extra"') : html)).join('');
 
   // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
   const C = { revenue: cssVar('--accent'), profit: cssVar('--good'), count: cssVar('--muted') };
