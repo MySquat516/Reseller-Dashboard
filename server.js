@@ -87,23 +87,61 @@ function clean(body) {
   return out;
 }
 
+// Dateityp wird an den ersten Bytes erkannt, nicht am Namen oder Content-Type des Clients.
+// Erlaubt: JPEG, PNG, GIF, WebP, HEIC/HEIF, AVIF. SVG & Co. werden bewusst abgelehnt (können Scripts enthalten).
+function sniffImageExt(file) {
+  let buf;
+  try {
+    const fd = fs.openSync(file, 'r');
+    try {
+      buf = Buffer.alloc(16);
+      buf = buf.subarray(0, fs.readSync(fd, buf, 0, 16, 0));
+    } finally { fs.closeSync(fd); }
+  } catch { return null; }
+  const ascii = (a, b) => buf.toString('latin1', a, b);
+  if (buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return '.jpg';
+  if (buf.length >= 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return '.png';
+  if (ascii(0, 6) === 'GIF87a' || ascii(0, 6) === 'GIF89a') return '.gif';
+  if (buf.length >= 12 && ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return '.webp';
+  if (buf.length >= 12 && ascii(4, 8) === 'ftyp') {
+    const brand = ascii(8, 12);
+    if (['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1', 'heif'].includes(brand)) return '.heic';
+    if (brand === 'avif' || brand === 'avis') return '.avif';
+  }
+  return null;
+}
+
 const storage = multer.diskStorage({
   destination: UPLOAD_DIR,
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '');
-    cb(null, crypto.randomBytes(12).toString('hex') + ext);
-  }
+  // Zufallsname ohne Endung; die richtige Endung kommt nach der Prüfung des Dateikopfs dazu.
+  filename: (req, file, cb) => cb(null, crypto.randomBytes(12).toString('hex'))
 });
 const MAX_IMAGES_PER_ITEM = 60;
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024, files: 40 },
-  fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype))
+  limits: { fileSize: 15 * 1024 * 1024, files: 40 }
+  // Kein Mime-Filter: Der Content-Type kommt vom Client und ist nicht verlässlich (HEIC hat oft gar keinen).
+  // Geprüft wird nach dem Upload am Dateikopf (sniffImageExt).
 });
 
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  next();
+});
+// Für Docker-Healthcheck: bewusst ohne Daten und (später) ohne Login erreichbar
+app.get('/healthz', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
+});
 app.use(express.json({ limit: '1mb' }));
-app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', index: false }));
 app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -188,11 +226,22 @@ app.post('/api/items/:id/images', upload.array('images', 40), (req, res) => {
     return res.status(404).json({ error: 'Nicht gefunden' });
   }
   const files = req.files || [];
+  // Alles-oder-nichts: Die Antwort-IDs müssen zur Reihenfolge der hochgeladenen Dateien passen.
+  const exts = files.map(f => sniffImageExt(f.path));
+  if (exts.some(e => !e)) {
+    files.forEach(f => fs.unlink(f.path, () => {}));
+    return res.status(400).json({ error: 'Mindestens eine Datei ist kein gültiges Bild (erlaubt: JPEG, PNG, GIF, WebP, HEIC, AVIF)' });
+  }
   const have = db.prepare('SELECT COUNT(*) c FROM images WHERE item_id = ?').get(it.id).c;
   if (have + files.length > MAX_IMAGES_PER_ITEM) {
     files.forEach(f => fs.unlink(f.path, () => {}));
     return res.status(400).json({ error: `Maximal ${MAX_IMAGES_PER_ITEM} Bilder pro Artikel` });
   }
+  files.forEach((f, i) => {
+    const name = f.filename + exts[i];
+    fs.renameSync(f.path, path.join(UPLOAD_DIR, name));
+    f.filename = name;
+  });
   const pos = db.prepare('SELECT COALESCE(MAX(position),0) p FROM images WHERE item_id = ?').get(it.id).p;
   const ins = db.prepare('INSERT INTO images (item_id, filename, position) VALUES (?,?,?)');
   const ids = files.map((f, i) => Number(ins.run(it.id, f.filename, pos + i + 1).lastInsertRowid));
