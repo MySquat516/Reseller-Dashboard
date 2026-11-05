@@ -118,6 +118,10 @@ ungeschützt ins Internet.
 - Bis zu 60 Bilder pro Artikel: Drag-and-drop, Einfügen per Strg+V oder Auswählen (am Handy auch direkt Kamera),
   Sortieren per Ziehen, Titelbild per Stern, Großansicht mit Pfeiltasten und Wischen.
   Große Fotos werden vor dem Upload im Browser auf max. 1800 px verkleinert (spart Speicher und Zeit).
+- Artikelliste: Sortierung (zuletzt/zuerst angelegt, Titel A–Z, Einkaufspreis, längste Standzeit; die Wahl bleibt gespeichert) und Suche mit
+  mehreren Wörtern in beliebiger Reihenfolge über Titel, Marke, Größe, Kategorie, Zustand, Beschreibung, Plattform, Käufer, Notizen und
+  Sendungsnummer; die Trefferzahl steht über der Liste. Im Artikel legt „Als Kopie anlegen“ eine Kopie samt Fotos an
+  (praktisch für mehrere gleiche Teile), Status, Verkaufs- und Versanddaten bleiben leer.
 - Status-Ablauf: Lager → Online → Reserviert → Noch nicht versendet → Versendet → Verkauft (abgeschlossen).
   Die Artikelliste zeigt standardmäßig nur aktive Artikel, abgeschlossene („Verkauft") sind über den Filter erreichbar.
 - Preise: Einkauf, Einstellpreis, Verkaufspreis, Gebühren, Versandkosten, Daten
@@ -223,6 +227,7 @@ Einstellungen → Sicherheit abmeldest oder das Passwort änderst (das meldet ü
 | GET | `/api/items` | alle Artikel inkl. Bilder |
 | POST | `/api/items` | Artikel anlegen |
 | PUT | `/api/items/:id` | Artikel ändern |
+| POST | `/api/items/:id/duplicate` | Kopie anlegen: Beschreibung, Einkaufsdaten, Einstellpreis, Notizen und Fotos werden übernommen, Status `lager`, Verkaufs- und Versanddaten leer; Antwort `{ id, images, skippedImages }` |
 | DELETE | `/api/items/:id` | Artikel samt Bildern löschen |
 | POST | `/api/items/:id/images` | Bilder hochladen (multipart, Feld `images`) |
 | DELETE | `/api/images/:id` | einzelnes Bild löschen |

@@ -96,19 +96,55 @@ async function loadItems() {
 
 const STATUS_LABEL = { lager: 'Lager', online: 'Online', reserviert: 'Reserviert', zu_versenden: 'Noch nicht versendet', versendet: 'Versendet', verkauft: 'Verkauft' };
 
+// Standzeit in Tagen: seit "Online seit", sonst Kaufdatum, sonst Anlagetag. Nur für unverkaufte Artikel (sonst null).
+const UNSOLD = ['lager', 'online', 'reserviert'];
+function standingDays(i) {
+  if (!UNSOLD.includes(i.status)) return null;
+  const start = i.listed_date || i.purchase_date || (i.created_at || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return null;
+  const [y, m, d] = start.split('-').map(Number), now = new Date();
+  return Math.max(0, Math.round((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(y, m - 1, d)) / 86400000));
+}
+const byTitle = (a, b) => a.title.localeCompare(b.title, 'de', { sensitivity: 'base', numeric: true });
+const ITEM_SORTS = {
+  newest: (a, b) => b.id - a.id,
+  oldest: (a, b) => a.id - b.id,
+  title: (a, b) => byTitle(a, b) || b.id - a.id,
+  price_desc: (a, b) => (b.purchase_price || 0) - (a.purchase_price || 0) || b.id - a.id,
+  price_asc: (a, b) => (a.purchase_price || 0) - (b.purchase_price || 0) || b.id - a.id,
+  standing: (a, b) => (standingDays(b) ?? -1) - (standingDays(a) ?? -1) || b.id - a.id   // verkaufte Artikel ans Ende
+};
+
+// Gewählte Sortierung merken (nur im Browser; ohne Speicher gilt der Standard)
+const sortStore = {
+  get() { try { return localStorage.getItem('rd-items-sort'); } catch { return null; } },
+  set(v) { try { localStorage.setItem('rd-items-sort', v); } catch { /* Speicher nicht verfügbar */ } }
+};
+if (ITEM_SORTS[sortStore.get()]) $('#f-sort').value = sortStore.get();
+
 function renderItems() {
-  const q = $('#f-search').value.toLowerCase();
+  // Mehrere Suchwörter müssen alle vorkommen (in beliebiger Reihenfolge und Feld)
+  const words = $('#f-search').value.toLowerCase().split(/\s+/).filter(Boolean);
   const st = $('#f-status').value;
-  const list = items.filter(i =>
-    (!st || (st === 'aktiv' ? i.status !== 'verkauft' : i.status === st)) &&
-    (!q || [i.title, i.brand, i.category, i.description, i.platform].some(x => (x || '').toLowerCase().includes(q))));
+  const sortKey = $('#f-sort').value;
+  const list = items.filter(i => {
+    if (st && (st === 'aktiv' ? i.status === 'verkauft' : i.status !== st)) return false;
+    if (!words.length) return true;
+    const hay = [i.title, i.brand, i.category, i.size, i.condition, i.description, i.platform, i.buyer, i.notes, i.tracking_number]
+      .map(x => (x || '').toLowerCase()).join('\n');
+    return words.every(w => hay.includes(w));
+  }).sort(ITEM_SORTS[sortKey] || ITEM_SORTS.newest);
+  const inStatus = items.filter(i => !st || (st === 'aktiv' ? i.status !== 'verkauft' : i.status === st)).length;
+  $('#items-count').textContent = items.length
+    ? (list.length === inStatus ? `${list.length} Artikel` : `${list.length} von ${inStatus} Artikeln`)
+    : '';
   $('#items-list').innerHTML = list.length ? list.map(i => `
     <article class="item" data-id="${i.id}" tabindex="0" role="button">
       <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '📷'}${i.images.length > 1 ? `<span class="count">📷 ${i.images.length}</span>` : ''}</div>
       <div class="body">
         <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
         <div class="title">${esc(i.title)}</div>
-        <div class="meta">${esc([i.brand, i.size, i.category].filter(Boolean).join(' · '))}</div>
+        <div class="meta">${esc([i.brand, i.size, i.category].filter(Boolean).join(' · '))}${sortKey === 'standing' && standingDays(i) != null ? `${i.brand || i.size || i.category ? ' · ' : ''}${standingDays(i)} ${standingDays(i) === 1 ? 'Tag' : 'Tage'}` : ''}</div>
         ${i.tracking_number ? `<div class="track">📦 ${esc([i.carrier, i.tracking_number].filter(Boolean).join(' · '))}</div>` : ''}
         <div class="price"><span>EK ${eur(i.purchase_price)}</span><span>${i.sold_price != null ? 'VK ' + eur(i.sold_price) : i.listing_price != null ? 'Angebot ' + eur(i.listing_price) : ''}</span></div>
       </div>
@@ -123,6 +159,7 @@ function fillDatalists() {
 
 $('#f-search').addEventListener('input', renderItems);
 $('#f-status').addEventListener('change', renderItems);
+$('#f-sort').addEventListener('change', () => { sortStore.set($('#f-sort').value); renderItems(); });
 $('#items-list').addEventListener('keydown', e => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
   const el = e.target.closest('.item[data-id]');
@@ -149,6 +186,7 @@ function openDialog(item) {
   form.reset();
   $('#dlg-title').textContent = item ? 'Bearbeiten' : 'Neuer Artikel';
   $('#btn-delete').hidden = !item;
+  $('#btn-duplicate').hidden = $('#dup-hint').hidden = !item;
   if (item) {
     for (const el of form.elements) {
       if (el.name && item[el.name] != null) el.value = item[el.name];
@@ -377,6 +415,27 @@ form.addEventListener('submit', async e => {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Speichern';
+  }
+});
+
+$('#btn-duplicate').addEventListener('click', async () => {
+  if (!editing) return;
+  const btn = $('#btn-duplicate');
+  btn.disabled = true;
+  hideMsg('form-error');
+  try {
+    const r = await api(`/api/items/${editing.id}/duplicate`, { method: 'POST' });
+    await loadItems();
+    refreshActiveView();
+    const copy = items.find(i => i.id === r.id);
+    dlg.close();
+    openDialog(copy);   // ab jetzt wird die Kopie bearbeitet
+    showMsg('form-error', 'Kopie angelegt (Status Lager, ohne Verkaufs- und Versanddaten). Du bearbeitest jetzt die Kopie.'
+      + (r.skippedImages ? ` ${r.skippedImages} Foto${r.skippedImages === 1 ? '' : 's'} konnte nicht kopiert werden.` : ''), 'info');
+  } catch (err) {
+    showMsg('form-error', 'Kopieren fehlgeschlagen: ' + err.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 

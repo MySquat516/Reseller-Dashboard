@@ -410,3 +410,9 @@ a.btn.disabled { opacity: .5; pointer-events: none; }
 .chart-table summary { cursor: pointer; color: var(--muted); font-size: 0.765rem; }
 .chart-table .scroll-x { max-height: 260px; overflow: auto; margin-top: 8px; }
 #sales-charts .hint { margin: 8px 0 0; }
+/* Artikel duplizieren, Trefferzahl */
+.dlg-dup { width: 100%; margin-top: 16px; }
+.dlg-dup-hint { margin: 6px 0 0; }
+.dlg-dup + .dlg-dup-hint + .dlg-delete { margin-top: 12px; }
+#items-count { margin: -6px 0 10px; min-height: 1.2em; }
+.filters select { flex: 0 1 auto; }
