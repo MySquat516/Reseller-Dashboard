@@ -1,5 +1,5 @@
 // ---------- Analysen in der Verkäufe-Ansicht ----------
-// Nutzt chart(), describe(), table(), eur, pct, sgn, cls, dateDe, verk, store, cssVar aus app.js und `sales` aus sales.js.
+// Nutzt chart(), describe(), table(), eur, pct, sgn, cls, dateDe, verk, cssVar aus app.js und `sales` aus sales.js.
 // Die Diagramme folgen dem gewählten Zeitraum, nicht den Filtern der Tabelle darunter.
 //
 // Farben: Gewinn = --good, Verlust = --bad, neutral = --muted. Grün und Rot liegen für Rot-Grün-Schwäche nah
@@ -111,7 +111,12 @@ function renderScatter(rows, c) {
 }
 
 const GROUP_LABEL = { platform: 'Plattform', category: 'Kategorie', brand: 'Marke' };
-let groupKey = store.get('rd-sales-group', 'platform');
+// Gewählte Gruppierung merken (nur im Browser; ohne Speicher gilt der Standard)
+const anStore = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* Speicher nicht verfügbar */ } }
+};
+let groupKey = anStore.get('rd-sales-group', 'platform');
 if (!GROUP_LABEL[groupKey]) groupKey = 'platform';
 
 // Gewinn je Gruppe, die besten sieben einzeln, der Rest als "Weitere"
@@ -174,6 +179,6 @@ function renderSalesCharts() {
 
 $('#sc-group').addEventListener('change', e => {
   groupKey = e.target.value;
-  store.set('rd-sales-group', groupKey);
+  anStore.set('rd-sales-group', groupKey);
   if (sales && sales.sales.length) renderGroup(sales.sales, anColors());
 });
