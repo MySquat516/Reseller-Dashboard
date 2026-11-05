@@ -73,7 +73,7 @@ function showView(v) {
   document.body.dataset.view = v;
   if (v === 'dashboard') loadStats();
   if (v === 'sales') loadSales();
-  if (v === 'settings') renderSettingsView();
+  if (v === 'settings') { renderSettingsView(); loadBackups(); }
 }
 
 // Nach dem Speichern oder Löschen die gerade sichtbare Auswertung neu laden

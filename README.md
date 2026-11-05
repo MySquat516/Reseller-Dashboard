@@ -61,7 +61,30 @@ und unter demselben Namen wie das fertige Image abgelegt.
 `docker compose up -d --build` ausführen. Neue Datenbankspalten werden beim Start automatisch ergänzt.
 
 Alle Daten (Datenbank `reseller.db` und Bilder in `uploads/`) liegen im Ordner `./data`.
-Backup = diesen Ordner kopieren.
+Backup = diesen Ordner kopieren, oder bequemer über die App (siehe unten).
+
+### Backup und Wiederherstellung
+
+Im Tab **Einstellungen → Daten & Backup**:
+
+- **Backup herunterladen:** eine ZIP-Datei mit Datenbank und allen Fotos (Stand zum Klickzeitpunkt, auch bei laufendem Betrieb konsistent).
+- **Backup einspielen:** ersetzt alle Artikel, Fotos, Versandvorlagen und Einstellungen durch den Stand aus einer ZIP-Datei
+  (oder aus einer einzelnen `.db`-Datei, zum Beispiel einer automatischen Sicherung; Fotos bleiben dann, wie sie sind).
+  Vorher legt der Server automatisch eine **Sicherheitskopie des jetzigen Stands mit Fotos** an (`backups/pre-restore-….zip`,
+  die letzten 2 bleiben). Ist die Datei ungültig oder beschädigt, wird nichts verändert. Backups aus älteren Versionen
+  funktionieren ebenfalls.
+- **Automatische Sicherung:** einmal pro Tag wird die Datenbank (ohne Fotos) nach `backups/auto-JJJJ-MM-TT.db` kopiert,
+  die letzten 14 Tage bleiben. Das schützt vor Bedienfehlern, aber nicht vor einem Festplattenausfall, weil der Ordner im selben
+  Datenverzeichnis liegt. Lade deshalb ab und zu ein vollständiges Backup herunter oder sichere `./data` zusätzlich extern.
+
+Optionale Umgebungsvariablen (in `docker-compose.yml` unter `environment`):
+
+| Variable | Standard | Bedeutung |
+|---|---|---|
+| `BACKUP_AUTO` | an | `0` schaltet die tägliche Sicherung aus |
+| `BACKUP_KEEP` | `14` | wie viele Tage automatische Sicherungen bleiben |
+| `BACKUP_DIR` | `<Datenordner>/backups` | anderer Ort für die Sicherungen, zum Beispiel eine zweite Platte |
+| `MAX_RESTORE_MB` | `4096` | größte erlaubte Datei beim Einspielen |
 
 Der Container läuft aus Sicherheitsgründen nicht als root, sondern als Benutzer `node`. Beim ersten Start nach einem
 Update setzt er den Besitzer von `./data` automatisch darauf (einmalig, das kann bei vielen Fotos kurz dauern).
@@ -147,4 +170,8 @@ Die App hat keinen Login. Betreibe sie nur im Heimnetz oder hinter einem Reverse
 | GET | `/api/export.csv` | alle Artikel als CSV |
 | GET/POST | `/api/shipping-presets` | Versandvorlagen auflisten / anlegen |
 | PUT/DELETE | `/api/shipping-presets/:id` | Versandvorlage ändern / löschen |
+| GET | `/api/backup` | vollständiges Backup (ZIP mit Datenbank und Fotos) herunterladen |
+| POST | `/api/restore` | Backup einspielen (multipart, Feld `backup`: ZIP oder `.db`), ersetzt alle Daten |
+| GET | `/api/backups` | Liste der Sicherungen im Ordner `backups` (automatisch und vor dem Einspielen) |
+| GET | `/api/backups/:name` | eine dieser Sicherungen herunterladen |
 | GET/PUT | `/api/settings` | Einstellungen lesen / ändern (`default_period`, `dead_days`, `monthly_goal`; PUT nimmt auch einzelne Felder) |
