@@ -105,7 +105,7 @@
   <section id="view-items" hidden>
     <div class="filters">
       <input id="f-search" type="search" placeholder="Suchen" aria-label="Artikel suchen (Titel, Marke, Kategorie)" enterkeyhint="search" autocomplete="off">
-      <a class="btn" id="btn-csv" href="/api/export.csv" download title="Alle Artikel als CSV für Excel">⬇ CSV-Export</a>
+      <button type="button" class="btn" id="btn-csv" title="Artikel als CSV für Excel exportieren">⬇ CSV-Export</button>
       <select id="f-status">
         <option value="aktiv">Aktiv (ohne abgeschlossene)</option>
         <option value="">Alle Status</option>
@@ -300,6 +300,47 @@
   </form>
 </dialog>
 
+<!-- CSV-Export -->
+<dialog id="dlg-csv" aria-labelledby="csv-title">
+  <h2 id="csv-title">CSV exportieren</h2>
+  <p class="hint">Für Excel: UTF-8, Semikolon, Dezimalkomma.</p>
+  <div class="csv-form">
+    <label>Welche Artikel
+      <select id="csv-scope">
+        <option value="all">Alle Artikel</option>
+        <option value="sold">Nur verkaufte</option>
+        <option value="unsold">Nur unverkaufte (Lager, Online, Reserviert)</option>
+      </select>
+    </label>
+    <label>Zeitraum
+      <select id="csv-period">
+        <option value="all">Alles</option>
+        <option value="month">Dieser Monat</option>
+        <option value="lastmonth">Letzter Monat</option>
+        <option value="year">Dieses Jahr</option>
+        <option value="lastyear">Letztes Jahr</option>
+        <option value="custom">Eigener Zeitraum …</option>
+      </select>
+    </label>
+    <div class="row" id="csv-custom" hidden>
+      <label>Von <input type="date" id="csv-from"></label>
+      <label>Bis <input type="date" id="csv-to"></label>
+    </div>
+    <label id="csv-by-wrap" hidden>Der Zeitraum gilt für das
+      <select id="csv-by">
+        <option value="sold">Verkaufsdatum</option>
+        <option value="purchase">Kaufdatum</option>
+      </select>
+    </label>
+  </div>
+  <p class="hint" id="csv-summary" aria-live="polite"></p>
+  <div class="actions">
+    <span class="spacer"></span>
+    <button type="button" id="csv-close">Abbrechen</button>
+    <a class="btn primary" id="csv-go" href="/api/export.csv" download>⬇ Herunterladen</a>
+  </div>
+</dialog>
+
 <!-- Versandvorlagen -->
 <dialog id="dlg-ship">
   <h2>Versandvorlagen</h2>
@@ -339,5 +380,6 @@
 <script src="app.js"></script>
 <script src="sales.js"></script>
 <script src="settings.js"></script>
+<script src="csv.js"></script>
 </body>
 </html>

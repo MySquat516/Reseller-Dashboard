@@ -124,7 +124,7 @@ ungeschützt ins Internet.
 - Verkaufsdetails: Plattform, Käufer, Zahlungsart, Zahlungsstatus
 - Versand: Anbieter, Sendungsnummer mit Tracking-Link (DHL, Deutsche Post, Hermes, DPD, GLS, UPS) und
   Versandvorlagen (Anbieter + Preis), die Anbieter und Versandkosten im Artikel ausfüllen
-- CSV-Export aller Artikel (Excel-tauglich: UTF-8, Semikolon, Dezimalkomma) über den Button in der Artikelliste
+- CSV-Export (Excel-tauglich: UTF-8, Semikolon, Dezimalkomma) über den Button in der Artikelliste: wahlweise alle, nur verkaufte oder nur unverkaufte Artikel, optional für einen Zeitraum (Verkaufs- oder Kaufdatum; Voreinstellungen für Monat/Jahr oder eigene Daten)
 - Dashboard mit Zeitraum-Schalter (Dieser Monat, 3 Monate, Dieses Jahr, Alles):
   Gewinn, Umsatz, Marge, ROI, Standzeit, Preisabschlag, Auswertung nach Plattform, Zahlungsart, Kategorie und Marke
 - Zusatzkennzahlen (für den gewählten Zeitraum): Trefferquote, Ø Gewinn je Gewinn- und Ø Verlust je Verlust-Verkauf,
@@ -190,7 +190,7 @@ Einstellungen → Sicherheit abmeldest oder das Passwort änderst (das meldet ü
 | PUT | `/api/items/:id/images/order` | Bildreihenfolge speichern |
 | GET | `/api/stats?period=month\|3m\|year\|all&dead=7..365` | Kennzahlen fürs Dashboard (`dead` fehlt: Einstellung) |
 | GET | `/api/sales?period=month\|3m\|year\|all` | alle Verkäufe im Zeitraum mit Gewinn, Marge und Standzeit |
-| GET | `/api/export.csv` | alle Artikel als CSV |
+| GET | `/api/export.csv` | Artikel als CSV; optional `?scope=all\|sold\|unsold&by=sold\|purchase&from=JJJJ-MM-TT&to=JJJJ-MM-TT` (Zeitraum inklusive, `by` ist das Datum, auf das er sich bezieht, Standard `sold`; ungültige Werte → 400) |
 | GET/POST | `/api/shipping-presets` | Versandvorlagen auflisten / anlegen |
 | PUT/DELETE | `/api/shipping-presets/:id` | Versandvorlage ändern / löschen |
 | POST | `/api/login` | Anmelden (nur mit `APP_PASSWORD`): Cookie und Token |

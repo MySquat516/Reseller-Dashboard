@@ -333,8 +333,43 @@ function csvCell(v, numeric) {
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // verhindert Formel-Ausführung in Excel
   return /[;"]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
+// Auswahl für den Export: ?scope=all|sold|unsold  &by=sold|purchase  &from=JJJJ-MM-TT  &to=JJJJ-MM-TT
+// (Zeitraum gilt für das Verkaufsdatum bzw. Kaufdatum; Artikel ohne dieses Datum fallen dann heraus)
+const validDay = v => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(v + 'T00:00:00Z');
+  return !isNaN(d) && d.toISOString().slice(0, 10) === v;   // schließt z. B. 2026-02-30 aus
+};
+function exportFilter(q) {
+  const f = { scope: 'all', by: 'sold', from: null, to: null };
+  if (q.scope !== undefined) {
+    if (!['all', 'sold', 'unsold'].includes(q.scope)) return { error: 'Ungültige Auswahl (scope)' };
+    f.scope = q.scope;
+  }
+  if (q.by !== undefined) {
+    if (!['sold', 'purchase'].includes(q.by)) return { error: 'Ungültige Datumsart (by)' };
+    f.by = q.by;
+  }
+  for (const k of ['from', 'to']) {
+    if (q[k] === undefined || q[k] === '') continue;
+    if (typeof q[k] !== 'string' || !validDay(q[k])) return { error: `Ungültiges Datum (${k}), erwartet JJJJ-MM-TT` };
+    f[k] = q[k];
+  }
+  if (f.from && f.to && f.from > f.to) return { error: '„Von“ liegt nach „Bis“' };
+  return { filter: f };
+}
 app.get('/api/export.csv', (req, res) => {
-  const items = db.prepare('SELECT * FROM items ORDER BY id').all();
+  const { filter, error } = exportFilter(req.query);
+  if (error) return res.status(400).json({ error });
+  const isSold = it => SOLD_STATUSES.includes(it.status) && it.sold_price != null;
+  let items = db.prepare('SELECT * FROM items ORDER BY id').all()
+    .filter(it => filter.scope === 'all' || (filter.scope === 'sold' ? isSold(it) : ['lager', 'online', 'reserviert'].includes(it.status)));
+  if (filter.from || filter.to) {
+    items = items.filter(it => {
+      const d = filter.by === 'sold' ? (isSold(it) ? soldDay(it) : null) : it.purchase_date;
+      return d && (!filter.from || d >= filter.from) && (!filter.to || d <= filter.to);
+    });
+  }
   const counts = Object.fromEntries(db.prepare('SELECT item_id, COUNT(*) c FROM images GROUP BY item_id').all().map(r => [r.item_id, r.c]));
   const lines = [CSV_COLS.map(c => c[0]).join(';')];
   for (const it of items) {
@@ -342,7 +377,9 @@ app.get('/api/export.csv', (req, res) => {
     lines.push(CSV_COLS.map(([, k, t]) => csvCell(row[k], t === 'n')).join(';'));
   }
   const day = new Date();
-  const name = `reseller-export-${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}.csv`;
+  const today = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+  const range = filter.from || filter.to ? `${filter.from || 'anfang'}_bis_${filter.to || today}` : today;
+  const name = `reseller-export-${filter.scope === 'all' ? '' : filter.scope === 'sold' ? 'verkauft-' : 'unverkauft-'}${range}.csv`;
   res.set({ 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${name}"` });
   res.send('\uFEFF' + lines.join('\r\n') + '\r\n');
 });
