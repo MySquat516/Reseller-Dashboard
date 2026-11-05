@@ -161,7 +161,7 @@ h1 { display: flex; align-items: center; gap: 10px; }
 
 /* Versandvorlagen */
 .row3 { display: grid; grid-template-columns: 2fr 1.4fr 1fr auto; gap: 10px; align-items: end; margin-top: 12px; }
-#ship-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+#ship-list, #set-presets { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .ship-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
 .ship-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .item .track { font-size: 0.765rem; color: var(--muted); overflow-wrap: anywhere; }
@@ -178,7 +178,7 @@ a.btn { display: inline-flex; align-items: center; padding: 8px 12px; border: 1p
 
   header nav {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
-    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
     background: var(--surface); border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -324,6 +324,83 @@ ol.rank .t small { display: block; color: var(--muted); }
 ol.rank .v { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
 @media (max-width: 640px) { #sales-table .col-opt { display: none; } }
 
+/* Einstellungen */
+.settings-grid { display: grid; gap: 14px; max-width: 720px; margin: 0 auto; }
+.set-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.set-row:last-of-type { border-bottom: 0; }
+.set-row label { display: block; font-weight: 600; margin-bottom: 6px; }
+.set-row select, .set-row .inline { max-width: 240px; }
+.set-row .inline { display: flex; align-items: center; gap: 8px; }
+.set-row .hint, #view-settings .card > .hint { margin: 6px 0 0; }
+#view-settings .card > .hint:first-of-type { margin-bottom: 10px; }
+.ship-edit { display: grid; grid-template-columns: 2fr 1.4fr 1fr auto auto; gap: 8px; align-items: center; }
+.ship-edit input { min-width: 0; }
+@media (max-width: 640px) {
+  .ship-edit { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ship-edit input[name="name"] { grid-column: 1 / -1; }
+}
+body[data-view="settings"] #btn-new { display: none; }
+
+/* Monatsziel in der Monatskarte */
+.mc-goal { flex: 1 1 100%; }
+.goal-text { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 0.765rem; margin-bottom: 6px; }
+.goal-track { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.goal-fill { height: 100%; background: var(--accent); border-radius: 99px; }
+.goal-fill.done { background: var(--good); }
+
+@media (max-width: 360px) { button.tab { font-size: 0.647rem; padding-left: 2px; padding-right: 2px; } }
+
+/* Schmale Handys: Name oben in voller Breite, Knöpfe darunter (sonst bricht der Text Buchstabe für Buchstabe um) */
+@media (max-width: 640px) {
+  .ship-row:not(.ship-edit) { flex-wrap: wrap; justify-content: flex-end; }
+  .ship-row:not(.ship-edit) .grow { flex: 1 1 100%; }
+}
+
+/* Backup */
+.bk-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0 8px; }
+a.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+#card-backup h4 { margin: 18px 0 4px; font-size: 0.824rem; }
+#bk-progress { width: 100%; height: 8px; margin: 6px 0; accent-color: var(--accent); }
+#bk-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.bk-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.bk-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .bk-actions .btn, .bk-actions button { flex: 1 1 100%; justify-content: center; } }
+
+#card-security p { margin: 0 0 10px; }
+#card-security code { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: .92em; }
+
+/* CSV-Export-Dialog */
+#dlg-csv { width: min(460px, 96vw); }
+.csv-form { display: grid; gap: 12px; margin: 12px 0 4px; }
+a.btn.disabled { opacity: .5; pointer-events: none; }
+#csv-custom[hidden], #csv-by-wrap[hidden] { display: none; }
+#dlg-csv .actions .btn, #dlg-csv .actions button { white-space: nowrap; }
+@media (max-width: 420px) {
+  /* Schmale Displays: Herunterladen oben und volle Breite, Abbrechen darunter */
+  #dlg-csv .actions { flex-direction: column-reverse; align-items: stretch; }
+  #dlg-csv .actions .spacer { display: none; }
+  #dlg-csv .actions .btn, #dlg-csv .actions button { display: flex; align-items: center; justify-content: center; text-align: center; }
+}
+
+/* CSV-Import */
+#dlg-import { width: min(640px, 96vw); }
+.im-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; padding: 0; }
+.im-stats li { padding: 4px 10px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface-2); font-size: 0.8rem; }
+.im-stats li.warn { color: var(--warn); }
+.im-skip { flex-direction: row; align-items: flex-start; gap: 8px; margin-bottom: 8px; color: var(--text); font-size: 0.85rem; }
+.im-skip[hidden] { display: none; }
+.im-skip input { width: auto; min-height: 0; padding: 0; margin: 3px 0 0; flex: none; }
+#dlg-import details { margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; }
+#dlg-import details[hidden] { display: none; }
+#dlg-import summary { cursor: pointer; padding: 6px 0; }
+.im-list { margin: 4px 0 8px; padding-left: 18px; max-height: 180px; overflow: auto; font-size: 0.8rem; overflow-wrap: anywhere; }
+.table-wrap { overflow-x: auto; }
+@media (max-width: 420px) {
+  #dlg-import .actions { flex-direction: column-reverse; align-items: stretch; }
+  #dlg-import .actions .spacer { display: none; }
+}
+/* Aktionsleiste bleibt beim Scrollen sichtbar (wichtig auf dem Handy) */
+#dlg-import .actions { position: sticky; bottom: -20px; margin: 14px -20px -20px; padding: 12px 20px; background: var(--surface); border-top: 1px solid var(--border); }
 /* Verkäufe: Analyse-Diagramme */
 #sales-charts { margin-bottom: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 760px) { #sales-charts { grid-template-columns: minmax(0, 1fr); } }

@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS images (
   filename TEXT NOT NULL,
   position INTEGER DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL                          -- JSON
+);
 `);
 
 // Spalten, die erst später dazukamen: bei bestehenden Datenbanken nachrüsten
@@ -87,23 +91,63 @@ function clean(body) {
   return out;
 }
 
+// Dateityp wird an den ersten Bytes erkannt, nicht am Namen oder Content-Type des Clients.
+// Erlaubt: JPEG, PNG, GIF, WebP, HEIC/HEIF, AVIF. SVG & Co. werden bewusst abgelehnt (können Scripts enthalten).
+function sniffImageExt(file) {
+  let buf;
+  try {
+    const fd = fs.openSync(file, 'r');
+    try {
+      buf = Buffer.alloc(16);
+      buf = buf.subarray(0, fs.readSync(fd, buf, 0, 16, 0));
+    } finally { fs.closeSync(fd); }
+  } catch { return null; }
+  const ascii = (a, b) => buf.toString('latin1', a, b);
+  if (buf.length >= 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return '.jpg';
+  if (buf.length >= 8 && buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) return '.png';
+  if (ascii(0, 6) === 'GIF87a' || ascii(0, 6) === 'GIF89a') return '.gif';
+  if (buf.length >= 12 && ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return '.webp';
+  if (buf.length >= 12 && ascii(4, 8) === 'ftyp') {
+    const brand = ascii(8, 12);
+    if (['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1', 'heif'].includes(brand)) return '.heic';
+    if (brand === 'avif' || brand === 'avis') return '.avif';
+  }
+  return null;
+}
+
 const storage = multer.diskStorage({
   destination: UPLOAD_DIR,
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '');
-    cb(null, crypto.randomBytes(12).toString('hex') + ext);
-  }
+  // Zufallsname ohne Endung; die richtige Endung kommt nach der Prüfung des Dateikopfs dazu.
+  filename: (req, file, cb) => cb(null, crypto.randomBytes(12).toString('hex'))
 });
 const MAX_IMAGES_PER_ITEM = 60;
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024, files: 40 },
-  fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype))
+  limits: { fileSize: 15 * 1024 * 1024, files: 40 }
+  // Kein Mime-Filter: Der Content-Type kommt vom Client und ist nicht verlässlich (HEIC hat oft gar keinen).
+  // Geprüft wird nach dem Upload am Dateikopf (sniffImageExt).
 });
 
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'same-origin');
+  next();
+});
+// Für Docker-Healthcheck: bewusst ohne Daten und (später) ohne Login erreichbar
+app.get('/healthz', (req, res) => {
+  try {
+    db.prepare('SELECT 1').get();
+    res.json({ ok: true });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
+});
+// Optionaler Passwortschutz (nur mit APP_PASSWORD); muss vor allen anderen Routen stehen
+require('./auth')({ app, DATA_DIR, publicDir: path.join(__dirname, 'public') });
 app.use(express.json({ limit: '1mb' }));
-app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', index: false }));
 app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -133,6 +177,51 @@ app.put('/api/shipping-presets/:id', (req, res) => {
 app.delete('/api/shipping-presets/:id', (req, res) => {
   db.prepare('DELETE FROM shipping_presets WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
+});
+
+// Einstellungen: Standardwerte für Oberfläche und Auswertung (serverseitig, gelten auf allen Geräten)
+const SETTING_DEFAULTS = { default_period: 'all', dead_days: 60, monthly_goal: null };
+function cleanSettings(b) {
+  const out = {};
+  if ('default_period' in b) {
+    if (!PERIODS.includes(b.default_period)) return { error: 'Ungültiger Standard-Zeitraum' };
+    out.default_period = b.default_period;
+  }
+  if ('dead_days' in b) {
+    const n = Number(b.dead_days);
+    if (b.dead_days === null || b.dead_days === '' || !Number.isInteger(n) || n < 7 || n > 365) {
+      return { error: 'Ladenhüter-Grenze: ganze Zahl von 7 bis 365 Tagen' };
+    }
+    out.dead_days = n;
+  }
+  if ('monthly_goal' in b) {
+    if (b.monthly_goal === null || b.monthly_goal === '') out.monthly_goal = null;
+    else {
+      const n = Number(b.monthly_goal);
+      if (!Number.isFinite(n) || n <= 0 || n > 10000000) return { error: 'Monatsziel: Betrag über 0 € oder leer lassen' };
+      out.monthly_goal = Math.round(n * 100) / 100;
+    }
+  }
+  return { values: out };
+}
+function readSettings() {
+  const out = { ...SETTING_DEFAULTS };
+  for (const { key, value } of db.prepare('SELECT key, value FROM settings').all()) {
+    if (!(key in SETTING_DEFAULTS)) continue;
+    try {
+      const c = cleanSettings({ [key]: JSON.parse(value) });
+      if (c.values) Object.assign(out, c.values);   // ungültige Werte ignorieren, Standard bleibt
+    } catch { /* kaputter Wert: Standard bleibt */ }
+  }
+  return out;
+}
+app.get('/api/settings', (req, res) => res.json(readSettings()));
+app.put('/api/settings', (req, res) => {
+  const { values, error } = cleanSettings(req.body || {});
+  if (error) return res.status(400).json({ error });
+  const up = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
+  db.transaction(() => { for (const [k, v] of Object.entries(values)) up.run(k, JSON.stringify(v)); })();
+  res.json(readSettings());
 });
 
 function withImages(items) {
@@ -188,11 +277,22 @@ app.post('/api/items/:id/images', upload.array('images', 40), (req, res) => {
     return res.status(404).json({ error: 'Nicht gefunden' });
   }
   const files = req.files || [];
+  // Alles-oder-nichts: Die Antwort-IDs müssen zur Reihenfolge der hochgeladenen Dateien passen.
+  const exts = files.map(f => sniffImageExt(f.path));
+  if (exts.some(e => !e)) {
+    files.forEach(f => fs.unlink(f.path, () => {}));
+    return res.status(400).json({ error: 'Mindestens eine Datei ist kein gültiges Bild (erlaubt: JPEG, PNG, GIF, WebP, HEIC, AVIF)' });
+  }
   const have = db.prepare('SELECT COUNT(*) c FROM images WHERE item_id = ?').get(it.id).c;
   if (have + files.length > MAX_IMAGES_PER_ITEM) {
     files.forEach(f => fs.unlink(f.path, () => {}));
     return res.status(400).json({ error: `Maximal ${MAX_IMAGES_PER_ITEM} Bilder pro Artikel` });
   }
+  files.forEach((f, i) => {
+    const name = f.filename + exts[i];
+    fs.renameSync(f.path, path.join(UPLOAD_DIR, name));
+    f.filename = name;
+  });
   const pos = db.prepare('SELECT COALESCE(MAX(position),0) p FROM images WHERE item_id = ?').get(it.id).p;
   const ins = db.prepare('INSERT INTO images (item_id, filename, position) VALUES (?,?,?)');
   const ids = files.map((f, i) => Number(ins.run(it.id, f.filename, pos + i + 1).lastInsertRowid));
@@ -233,8 +333,43 @@ function csvCell(v, numeric) {
   if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // verhindert Formel-Ausführung in Excel
   return /[;"]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
+// Auswahl für den Export: ?scope=all|sold|unsold  &by=sold|purchase  &from=JJJJ-MM-TT  &to=JJJJ-MM-TT
+// (Zeitraum gilt für das Verkaufsdatum bzw. Kaufdatum; Artikel ohne dieses Datum fallen dann heraus)
+const validDay = v => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(v + 'T00:00:00Z');
+  return !isNaN(d) && d.toISOString().slice(0, 10) === v;   // schließt z. B. 2026-02-30 aus
+};
+function exportFilter(q) {
+  const f = { scope: 'all', by: 'sold', from: null, to: null };
+  if (q.scope !== undefined) {
+    if (!['all', 'sold', 'unsold'].includes(q.scope)) return { error: 'Ungültige Auswahl (scope)' };
+    f.scope = q.scope;
+  }
+  if (q.by !== undefined) {
+    if (!['sold', 'purchase'].includes(q.by)) return { error: 'Ungültige Datumsart (by)' };
+    f.by = q.by;
+  }
+  for (const k of ['from', 'to']) {
+    if (q[k] === undefined || q[k] === '') continue;
+    if (typeof q[k] !== 'string' || !validDay(q[k])) return { error: `Ungültiges Datum (${k}), erwartet JJJJ-MM-TT` };
+    f[k] = q[k];
+  }
+  if (f.from && f.to && f.from > f.to) return { error: '„Von“ liegt nach „Bis“' };
+  return { filter: f };
+}
 app.get('/api/export.csv', (req, res) => {
-  const items = db.prepare('SELECT * FROM items ORDER BY id').all();
+  const { filter, error } = exportFilter(req.query);
+  if (error) return res.status(400).json({ error });
+  const isSold = it => SOLD_STATUSES.includes(it.status) && it.sold_price != null;
+  let items = db.prepare('SELECT * FROM items ORDER BY id').all()
+    .filter(it => filter.scope === 'all' || (filter.scope === 'sold' ? isSold(it) : ['lager', 'online', 'reserviert'].includes(it.status)));
+  if (filter.from || filter.to) {
+    items = items.filter(it => {
+      const d = filter.by === 'sold' ? (isSold(it) ? soldDay(it) : null) : it.purchase_date;
+      return d && (!filter.from || d >= filter.from) && (!filter.to || d <= filter.to);
+    });
+  }
   const counts = Object.fromEntries(db.prepare('SELECT item_id, COUNT(*) c FROM images GROUP BY item_id').all().map(r => [r.item_id, r.c]));
   const lines = [CSV_COLS.map(c => c[0]).join(';')];
   for (const it of items) {
@@ -242,7 +377,9 @@ app.get('/api/export.csv', (req, res) => {
     lines.push(CSV_COLS.map(([, k, t]) => csvCell(row[k], t === 'n')).join(';'));
   }
   const day = new Date();
-  const name = `reseller-export-${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}.csv`;
+  const today = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+  const range = filter.from || filter.to ? `${filter.from || 'anfang'}_bis_${filter.to || today}` : today;
+  const name = `reseller-export-${filter.scope === 'all' ? '' : filter.scope === 'sold' ? 'verkauft-' : 'unverkauft-'}${range}.csv`;
   res.set({ 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${name}"` });
   res.send('\uFEFF' + lines.join('\r\n') + '\r\n');
 });
@@ -273,7 +410,6 @@ const monthKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
 const soldDay = it => it.sold_date || (it.created_at || '').slice(0, 10);
 
 const PERIODS = ['month', '3m', 'year', 'all'];
-const DEAD_DAYS = [30, 60, 90];
 
 function periodStart(period, now) {
   if (period === 'month') return `${monthKey(now)}-01`;
@@ -343,7 +479,9 @@ app.get('/api/sales', (req, res) => {
 
 app.get('/api/stats', (req, res) => {
   const period = PERIODS.includes(req.query.period) ? req.query.period : 'all';
-  const deadDays = DEAD_DAYS.includes(Number(req.query.dead)) ? Number(req.query.dead) : 60;
+  // ?dead=N (7-365) überschreibt die gespeicherte Ladenhüter-Grenze
+  const dq = Number(req.query.dead);
+  const deadDays = Number.isInteger(dq) && dq >= 7 && dq <= 365 ? dq : readSettings().dead_days;
   const now = new Date();
   const today = localDay(now);
   const from = periodStart(period, now);
@@ -458,10 +596,21 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
+require('./backup')({ app, db, DATA_DIR, UPLOAD_DIR, sniffImageExt });
+require('./csvimport')({ app, db, FIELDS, STATUSES, SOLD_STATUSES, validDay });
+
 app.use((err, req, res, next) => {
-  console.error(err);
   if (err instanceof multer.MulterError) return res.status(400).json({ error: 'Upload-Fehler: ' + err.message });
+  // Fehler des Aufrufers (kaputtes JSON, zu großer Body) sind keine Serverfehler
+  if (err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({
+      error: err.type === 'entity.parse.failed' ? 'Ungültiges JSON' : err.type === 'entity.too.large' ? 'Anfrage zu groß' : (err.message || 'Ungültige Anfrage')
+    });
+  }
+  console.error(err);
   res.status(500).json({ error: err.message || 'Serverfehler' });
 });
 
-app.listen(PORT, () => console.log(`Reseller-Dashboard läuft auf Port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`Reseller-Dashboard läuft auf Port ${PORT}`));
+// Große Backups über langsames WLAN dürfen länger als die Standard-5-Minuten brauchen
+server.requestTimeout = 30 * 60 * 1000;

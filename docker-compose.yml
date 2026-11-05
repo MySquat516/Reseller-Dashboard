@@ -13,11 +13,11 @@ services:
       - "${PORT:-3000}:3000"      # anderer Host-Port: PORT=8080 docker compose up -d
     environment:
       TZ: Europe/Berlin
+      # Optional (siehe README, Abschnitt Backup):
+      # BACKUP_KEEP: 14             # Tage automatischer Sicherungen
+      # BACKUP_AUTO: 0              # 0 = tägliche Sicherung aus
+      # APP_PASSWORD: ein-langes-passwort   # schaltet den Passwortschutz ein (siehe README)
+      # APP_USER: admin
     volumes:
       - ./data:/data              # SQLite-Datenbank (reseller.db) und hochgeladene Bilder (uploads/)
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+    # Healthcheck steckt bereits im Image (Dockerfile) und fragt /healthz ab.
