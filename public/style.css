@@ -381,3 +381,23 @@ a.btn.disabled { opacity: .5; pointer-events: none; }
   #dlg-csv .actions .spacer { display: none; }
   #dlg-csv .actions .btn, #dlg-csv .actions button { display: flex; align-items: center; justify-content: center; text-align: center; }
 }
+
+/* CSV-Import */
+#dlg-import { width: min(640px, 96vw); }
+.im-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; padding: 0; }
+.im-stats li { padding: 4px 10px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface-2); font-size: 0.8rem; }
+.im-stats li.warn { color: var(--warn); }
+.im-skip { flex-direction: row; align-items: flex-start; gap: 8px; margin-bottom: 8px; color: var(--text); font-size: 0.85rem; }
+.im-skip[hidden] { display: none; }
+.im-skip input { width: auto; min-height: 0; padding: 0; margin: 3px 0 0; flex: none; }
+#dlg-import details { margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; }
+#dlg-import details[hidden] { display: none; }
+#dlg-import summary { cursor: pointer; padding: 6px 0; }
+.im-list { margin: 4px 0 8px; padding-left: 18px; max-height: 180px; overflow: auto; font-size: 0.8rem; overflow-wrap: anywhere; }
+.table-wrap { overflow-x: auto; }
+@media (max-width: 420px) {
+  #dlg-import .actions { flex-direction: column-reverse; align-items: stretch; }
+  #dlg-import .actions .spacer { display: none; }
+}
+/* Aktionsleiste bleibt beim Scrollen sichtbar (wichtig auf dem Handy) */
+#dlg-import .actions { position: sticky; bottom: -20px; margin: 14px -20px -20px; padding: 12px 20px; background: var(--surface); border-top: 1px solid var(--border); }

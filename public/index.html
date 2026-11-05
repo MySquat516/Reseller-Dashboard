@@ -178,6 +178,19 @@
         <div id="bk-list"></div>
       </div>
 
+      <div class="card" id="card-import">
+        <h3>Artikel aus CSV importieren</h3>
+        <p class="hint">Für Listen aus Excel, Numbers oder Google Sheets (als CSV gespeichert) und für den eigenen CSV-Export.
+          Pflicht ist nur die Spalte „Titel“. Vor dem Import siehst du eine Vorschau, es wird noch nichts gespeichert.</p>
+        <div class="banner error" id="im-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
+        <div class="bk-actions">
+          <button type="button" class="primary" id="btn-import">CSV-Datei wählen …</button>
+          <button type="button" id="btn-template">Vorlage herunterladen</button>
+          <input type="file" id="import-file" accept=".csv,.txt,text/csv,text/plain,text/tab-separated-values" hidden>
+        </div>
+        <p class="hint" id="im-status" role="status" aria-live="polite"></p>
+      </div>
+
       <div class="card" id="card-security">
         <h3>Sicherheit</h3>
         <div id="sec-on" hidden>
@@ -341,6 +354,28 @@
   </div>
 </dialog>
 
+<!-- CSV-Import: Vorschau -->
+<dialog id="dlg-import" aria-labelledby="im-title">
+  <h2 id="im-title">Import-Vorschau</h2>
+  <p class="hint" id="im-file"></p>
+  <ul class="im-stats" id="im-stats"></ul>
+  <label class="im-skip" id="im-skip-wrap" hidden>
+    <input type="checkbox" id="im-skip" checked>
+    <span>Mögliche Duplikate überspringen (gleicher Titel, Einkaufspreis und Kaufdatum wie ein vorhandener Artikel)</span>
+  </label>
+  <details id="im-errors"><summary></summary><ul class="im-list" id="im-errors-list"></ul></details>
+  <details id="im-warnings"><summary></summary><ul class="im-list" id="im-warnings-list"></ul></details>
+  <details id="im-sample" open><summary>Vorschau der ersten Zeilen</summary>
+    <div class="table-wrap"><table><thead><tr><th>Zeile</th><th>Titel</th><th>Status</th><th class="num">EK</th><th class="num">VK</th></tr></thead><tbody id="im-sample-body"></tbody></table></div>
+  </details>
+  <details id="im-cols"><summary>Erkannte Spalten</summary><p class="hint" id="im-cols-body"></p></details>
+  <div class="actions">
+    <span class="spacer"></span>
+    <button type="button" id="im-cancel">Abbrechen</button>
+    <button type="button" class="primary" id="im-go">Importieren</button>
+  </div>
+</dialog>
+
 <!-- Versandvorlagen -->
 <dialog id="dlg-ship">
   <h2>Versandvorlagen</h2>
@@ -381,5 +416,6 @@
 <script src="sales.js"></script>
 <script src="settings.js"></script>
 <script src="csv.js"></script>
+<script src="import.js"></script>
 </body>
 </html>

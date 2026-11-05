@@ -125,6 +125,11 @@ ungeschützt ins Internet.
 - Versand: Anbieter, Sendungsnummer mit Tracking-Link (DHL, Deutsche Post, Hermes, DPD, GLS, UPS) und
   Versandvorlagen (Anbieter + Preis), die Anbieter und Versandkosten im Artikel ausfüllen
 - CSV-Export (Excel-tauglich: UTF-8, Semikolon, Dezimalkomma) über den Button in der Artikelliste: wahlweise alle, nur verkaufte oder nur unverkaufte Artikel, optional für einen Zeitraum (Verkaufs- oder Kaufdatum; Voreinstellungen für Monat/Jahr oder eigene Daten)
+- CSV-Import (Einstellungen → „Artikel aus CSV importieren“): liest Listen aus Excel, Numbers oder Google Sheets und den eigenen
+  CSV-Export ein. Erst gibt es eine Vorschau mit Fehlern (Zeilennummer wie in Excel) und Hinweisen, gespeichert wird erst nach
+  Bestätigung. Trennzeichen (Semikolon, Komma, Tab) und Zeichensatz (UTF-8, Excel-„ANSI“, UTF-16) werden automatisch erkannt.
+  Mögliche Duplikate (gleicher Titel, Einkaufspreis und Kaufdatum wie ein vorhandener Artikel) lassen sich überspringen, sodass
+  sich dieselbe Datei gefahrlos zweimal einlesen lässt. Eine Vorlage zum Ausfüllen gibt es per Button.
 - Dashboard mit Zeitraum-Schalter (Dieser Monat, 3 Monate, Dieses Jahr, Alles):
   Gewinn, Umsatz, Marge, ROI, Standzeit, Preisabschlag, Auswertung nach Plattform, Zahlungsart, Kategorie und Marke
 - Zusatzkennzahlen (für den gewählten Zeitraum): Trefferquote, Ø Gewinn je Gewinn- und Ø Verlust je Verlust-Verkauf,
@@ -148,6 +153,37 @@ ungeschützt ins Internet.
   Noch nicht bezahlte Verkäufe stehen zusätzlich bei „Offene Zahlungen".
 - Der Monat richtet sich nach „Verkauft am", ersatzweise nach dem Anlegedatum.
 - Gewinn = Verkaufspreis − Einkaufspreis − Gebühren − Versandkosten.
+
+## CSV-Import: Spalten und Formate
+
+Die erste Zeile enthält die Spaltennamen, nur „Titel“ ist Pflicht. Groß-/Kleinschreibung, Bindestriche und Umlaute spielen keine
+Rolle. Erkannt werden diese Spalten (mit gängigen Alternativen):
+
+| Feld | Spaltenname (Alternativen) |
+|---|---|
+| Titel | Titel (Artikel, Bezeichnung, Name, Produkt) |
+| Beschreibung, Größe, Kategorie, Marke, Zustand | gleichnamig (Größe: Size, Marke: Brand/Hersteller) |
+| Status | Status: Lager, Online, Reserviert, Noch nicht versendet (zu versenden, gekauft), Versendet, Verkauft |
+| Einkaufspreis, Gekauft am | EK, Kaufpreis · Kaufdatum, Einkaufsdatum |
+| Einstellpreis, Online seit | Angebotspreis · Eingestellt am |
+| Verkaufspreis, Verkauft am | VK, VK-Preis, Erlös · Verkaufsdatum |
+| Plattform, Käufer, Zahlungsart, Zahlungsstatus | Marktplatz · Kunde · Zahlungsmethode · bezahlt/offen |
+| Gebühren, Versandkosten | Provision · Porto, Versand |
+| Versandanbieter, Sendungsnummer, Notizen | Carrier · Tracking · Notiz, Bemerkung |
+
+Spalten wie ID, Gewinn und Bilder (aus dem eigenen Export) werden ignoriert, unbekannte Spalten ebenfalls (die Vorschau nennt sie).
+
+- **Zahlen:** `12,50`, `12.5`, `1.234,56`, `1,234.56`, `12 €` sind möglich. Negative Beträge und mehr als zwei Nachkommastellen werden als Fehler gemeldet.
+- **Datum:** `05.03.2026`, `5.3.26`, `2026-03-05` (auch mit Uhrzeit). Ungültige Tage wie der 31.02. sind Fehler.
+- **Status leer:** Mit Verkaufspreis wird daraus „Verkauft“, sonst „Lager“.
+- **Hinweise** (Import klappt trotzdem): Status „Verkauft“ ohne Verkaufspreis (zählt nicht als Verkauf), Verkaufspreis ohne Verkaufsstatus,
+  fehlendes Verkaufsdatum (es zählt dann der Importtag), Verkaufsdatum vor dem Kaufdatum.
+- **Excel:** „Speichern unter“ → „CSV (Trennzeichen-getrennt)“ oder „CSV UTF-8“. Eine `.xlsx`-Datei kann nicht gelesen werden, die App sagt das dann.
+- Der Import legt nur neue Artikel an und ändert keine vorhandenen. Fotos lassen sich nicht per CSV importieren.
+
+## Tests
+
+`npm test` führt die automatischen Tests aus (`node --test`, keine zusätzlichen Pakete).
 
 ## Hinweis
 
@@ -200,4 +236,5 @@ Einstellungen → Sicherheit abmeldest oder das Passwort änderst (das meldet ü
 | POST | `/api/restore` | Backup einspielen (multipart, Feld `backup`: ZIP oder `.db`), ersetzt alle Daten |
 | GET | `/api/backups` | Liste der Sicherungen im Ordner `backups` (automatisch und vor dem Einspielen) |
 | GET | `/api/backups/:name` | eine dieser Sicherungen herunterladen |
+| POST | `/api/import.csv` | Artikel aus CSV importieren; Body ist die Datei als Text (`Content-Type: text/csv`, max. 5 MB und 5000 Zeilen). `?dry=1` prüft nur und legt nichts an (Vorschau), `?skipDuplicates=0` importiert auch mögliche Duplikate. Antwort: erkannte Spalten, Anzahl gültig/Duplikate/Fehler, Fehler und Hinweise mit Zeilennummer, Beispielzeilen |
 | GET/PUT | `/api/settings` | Einstellungen lesen / ändern (`default_period`, `dead_days`, `monthly_goal`; PUT nimmt auch einzelne Felder) |

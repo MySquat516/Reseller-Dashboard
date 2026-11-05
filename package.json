@@ -4,7 +4,8 @@
   "description": "Artikelverwaltung und Finanz-Dashboard für Reseller",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "better-sqlite3": "^11.5.0",
