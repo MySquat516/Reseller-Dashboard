@@ -8,11 +8,23 @@ on:
     paths: ['ios/**', '.github/workflows/ios.yml']
   workflow_dispatch:
 
+# Xcode und Simulator fest einstellen, statt sich auf die Standardversion des Runners zu verlassen.
+# Mit der Standardversion (Xcode 16.4) fand der Runner am 05.11.2026 zweimal keinen Simulator.
+# Welche Versionen es gibt, steht in der Readme des Runner-Images (macos-15-arm64).
+env:
+  XCODE_APP: /Applications/Xcode_26.2.app
+  SIM_DEVICE: iPhone 16 Pro
+  SIM_OS: '26.2'
+
 jobs:
   build-and-test:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Xcode auswählen
+        run: |
+          sudo xcode-select -s "$XCODE_APP"
+          xcodebuild -version
       - name: XcodeGen installieren
         run: brew install xcodegen
       - name: Projekt erzeugen
@@ -25,5 +37,11 @@ jobs:
           xcodebuild test \
             -project ResellerApp.xcodeproj \
             -scheme ResellerApp \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination "platform=iOS Simulator,name=$SIM_DEVICE,OS=$SIM_OS" \
             CODE_SIGNING_ALLOWED=NO | tail -n 80
+      - name: Vorhandene Simulatoren anzeigen (nur bei Fehler)
+        if: failure()
+        run: |
+          xcode-select -p
+          xcrun simctl list runtimes
+          xcrun simctl list devices available
