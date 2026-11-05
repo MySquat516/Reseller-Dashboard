@@ -107,7 +107,10 @@ ungeschützt ins Internet.
 - Monatskachel: Gewinn des aktuellen Monats im Vergleich zum Vormonat bis zum gleichen Tag
 - Monatsübersicht als Diagramm und Tabelle (inkl. Monate ohne Verkäufe)
 - Immer aktuell, unabhängig vom Zeitraum: Lagerwert, Bestand, offene Zahlungen und Ladenhüter
-  (Grenze wählbar: 30, 60 oder 90 Tage)
+  (Grenze einstellbar, Standard 60 Tage)
+- Einstellungen (eigener Tab, gelten auf allen Geräten): Standard-Zeitraum für Dashboard und Verkäufe,
+  Ladenhüter-Grenze (7 bis 365 Tage), optionales Monatsziel mit Fortschrittsbalken im Dashboard und
+  Verwaltung der Versandvorlagen (anlegen, bearbeiten, löschen)
 - Formularhinweis, wenn „Verkauft am" vor „Online seit" liegt
 
 ## Was zählt als Verkauf?
@@ -135,8 +138,9 @@ Die App hat keinen Login. Betreibe sie nur im Heimnetz oder hinter einem Reverse
 | POST | `/api/items/:id/images` | Bilder hochladen (multipart, Feld `images`) |
 | DELETE | `/api/images/:id` | einzelnes Bild löschen |
 | PUT | `/api/items/:id/images/order` | Bildreihenfolge speichern |
-| GET | `/api/stats?period=month\|3m\|year\|all&dead=30\|60\|90` | Kennzahlen fürs Dashboard |
+| GET | `/api/stats?period=month\|3m\|year\|all&dead=7..365` | Kennzahlen fürs Dashboard (`dead` fehlt: Einstellung) |
 | GET | `/api/sales?period=month\|3m\|year\|all` | alle Verkäufe im Zeitraum mit Gewinn, Marge und Standzeit |
 | GET | `/api/export.csv` | alle Artikel als CSV |
 | GET/POST | `/api/shipping-presets` | Versandvorlagen auflisten / anlegen |
 | PUT/DELETE | `/api/shipping-presets/:id` | Versandvorlage ändern / löschen |
+| GET/PUT | `/api/settings` | Einstellungen lesen / ändern (`default_period`, `dead_days`, `monthly_goal`; PUT nimmt auch einzelne Felder) |
