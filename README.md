@@ -9,11 +9,25 @@ Stack: Node.js, Express, SQLite (better-sqlite3), Chart.js, Vanilla-JS-Frontend.
 
 ## Oberfläche
 
-Beispieldaten, keine echten Artikel.
+Beispieldaten, keine echten Artikel und keine echten Fotos.
 
-![Dashboard mit Gewinn, Monatsvergleich, Auswertungen und Ladenhütern](docs/screenshots/dashboard.png)
+**Dashboard:** Gewinn des Monats mit Vormonatsvergleich, Kennzahlen, Monatsübersicht, Auswertungen nach Plattform,
+Zahlungsart, Kategorie und Marke, Ladenhüter.
 
-![Artikelliste mit Status, Bildern und CSV-Export](docs/screenshots/artikel.png)
+![Dashboard mit Monatsgewinn, Kennzahlen, Monatsübersicht, Auswertungen und Ladenhütern](docs/screenshots/dashboard.png)
+
+**Verkäufe:** kumulierter Gewinn, Einkauf gegen Verkauf je Artikel, Gewinn nach Gruppe, beste und schwächste Verkäufe.
+Darunter folgt die sortierbare Tabelle aller Verkäufe.
+
+![Verkäufe-Ansicht mit kumuliertem Gewinn, Streudiagramm, Gewinn nach Plattform sowie besten und schwächsten Verkäufen](docs/screenshots/verkaeufe.png)
+
+**Artikel:** Liste mit Status, Fotos, Suche, Filter, Sortierung und CSV-Export.
+
+![Artikelliste mit Status, Fotos, Suche, Filter und Sortierung](docs/screenshots/artikel.png)
+
+**Am Handy:** Tab-Leiste unten und Plus-Knopf für neue Artikel.
+
+![Dashboard und Artikelliste auf dem iPhone](docs/screenshots/handy.png)
 
 ## Starten mit Docker
 
