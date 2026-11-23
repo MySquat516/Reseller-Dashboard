@@ -1,366 +1,361 @@
 <p align="center">
-  <img src="public/logo.svg" alt="Reseller-Dashboard-Logo" width="104">
+  <img src="public/logo.svg" alt="Reseller Dashboard logo" width="104">
 </p>
 
 <h1 align="center">Reseller-Dashboard</h1>
 
+<p align="center"><b>English</b> · <a href="README.de.md">Deutsch</a></p>
+
 <p align="center">
-  Artikelverwaltung und Finanz-Dashboard für Reseller,<br>
-  vom Einkauf über Fotos und Versand bis zum Gewinn pro Monat.
+  Inventory management and finance dashboard for resellers,<br>
+  from purchase, photos and shipping all the way to your profit per month.
 </p>
 
 <p align="center">
   <a href="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/test.yml"><img src="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
-  <a href="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/docker.yml"><img src="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/docker.yml/badge.svg" alt="Docker-Image"></a>
+  <a href="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/docker.yml"><img src="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/docker.yml/badge.svg" alt="Docker image"></a>
   <a href="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/ios.yml"><img src="https://github.com/MySquat516/Reseller-Dashboard/actions/workflows/ios.yml/badge.svg" alt="iOS"></a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/handy.png" alt="Dashboard und Artikelliste auf dem iPhone" width="560">
+  <img src="docs/screenshots/handy.png" alt="Dashboard and item list on an iPhone" width="560">
 </p>
 
 ---
 
-Wer nebenbei Klamotten, Sneaker & Co. weiterverkauft, verliert schnell den Überblick: Was liegt noch im Lager,
-was ist verkauft, aber noch nicht verschickt, und was bleibt nach Gebühren und Porto wirklich hängen?
-Das Reseller-Dashboard beantwortet das an einem Ort. Es läuft im eigenen Homelab, die Daten bleiben bei dir.
+If you resell clothes, sneakers and the like on the side, it is easy to lose track: What is still in stock,
+what has sold but not shipped yet, and what is actually left after fees and postage?
+The Reseller-Dashboard answers all of that in one place. It runs in your own homelab, so your data stays with you.
 
-## Was es kann
+> **Language:** The app itself is in German (prices in euros, German number and date formats).
+> This README is available in English and [German](README.de.md).
 
-- **Artikel mit allem Drum und Dran:** Titel, Beschreibung, Größe, Kategorie, Marke, Zustand, Notizen und
-  bis zu 60 Fotos pro Artikel (Drag-and-drop, Einfügen per Strg+V, am Handy direkt aus der Kamera)
-- **Status-Ablauf:** Lager → Online → Reserviert → Noch nicht versendet → Versendet → Verkauft
-- **Verkauf und Versand:** Plattform, Käufer, Zahlungsart und -status, Gebühren, Versandkosten,
-  Sendungsnummer mit Tracking-Link und Versandvorlagen
-- **Dashboard:** Gewinn des Monats mit Vormonatsvergleich, Umsatz, Marge, ROI, Standzeit, Lagerwert,
-  offene Zahlungen, Ladenhüter und Auswertungen nach Plattform, Zahlungsart, Kategorie und Marke
-- **Verkäufe-Ansicht:** sortierbare Tabelle, beste und schwächste Verkäufe, kumulierter Gewinn und
-  Einkauf gegen Verkauf als Diagramm
-- **CSV-Export und -Import:** Excel-tauglich, mit Vorschau, Fehlerprüfung und Duplikat-Erkennung
-- **Backups:** vollständiges Backup per Klick, Wiederherstellung mit automatischer Sicherheitskopie und
-  tägliche automatische Sicherung
-- **Fürs Handy gemacht:** läuft als App auf dem Homescreen, dazu gibt es eine native iOS-App (im Aufbau)
-- **Optionaler Passwortschutz** mit Face-ID-tauglichem Login am iPhone
+## Features
+
+- **Items with everything you need:** title, description, size, category, brand, condition, notes and
+  up to 60 photos per item (drag and drop, paste with Ctrl+V, or straight from the camera on a phone)
+- **Status flow:** in stock → online → reserved → not shipped yet → shipped → sold
+- **Sales and shipping:** platform, buyer, payment method and status, fees, shipping costs,
+  tracking number with a tracking link, and shipping presets
+- **Dashboard:** profit this month compared with last month, revenue, margin, ROI, time to sell, stock value,
+  open payments, slow movers, and breakdowns by platform, payment method, category and brand
+- **Sales view:** sortable table, best and worst sales, cumulative profit and purchase vs. sale price as charts
+- **CSV export and import:** works with Excel, with a preview, error checks and duplicate detection
+- **Backups:** full backup with one click, restore with an automatic safety copy, and a daily automatic backup
+- **Made for phones:** runs as an app on your home screen, plus a native iOS app (work in progress)
+- **Optional password protection** with a login that works with Face ID on the iPhone
 
 ## Screenshots
 
-Alle Screenshots zeigen Beispieldaten, keine echten Artikel und keine echten Fotos.
+All screenshots show sample data, no real items and no real photos.
 
-**Dashboard:** Monatsgewinn, Kennzahlen, Monatsübersicht, Auswertungen und Ladenhüter
+**Dashboard:** monthly profit, key figures, monthly overview, breakdowns and slow movers
 
-![Dashboard mit Monatsgewinn, Kennzahlen, Monatsübersicht, Auswertungen und Ladenhütern](docs/screenshots/dashboard.png)
+![Dashboard with monthly profit, key figures, monthly overview, breakdowns and slow movers](docs/screenshots/dashboard.png)
 
 <details>
-<summary><b>Verkäufe und Artikel</b></summary>
+<summary><b>Sales and items</b></summary>
 
-**Verkäufe:** kumulierter Gewinn, Einkauf gegen Verkauf je Artikel, Gewinn nach Gruppe, beste und schwächste
-Verkäufe. Darunter folgt die sortierbare Tabelle aller Verkäufe.
+**Sales:** cumulative profit, purchase vs. sale price per item, profit by group, best and worst sales.
+Below that is the sortable table of all sales.
 
-![Verkäufe-Ansicht mit kumuliertem Gewinn, Streudiagramm, Gewinn nach Plattform sowie besten und schwächsten Verkäufen](docs/screenshots/verkaeufe.png)
+![Sales view with cumulative profit, scatter chart, profit by platform and best and worst sales](docs/screenshots/verkaeufe.png)
 
-**Artikel:** Liste mit Status, Fotos, Suche, Filter, Sortierung und CSV-Export.
+**Items:** list with status, photos, search, filters, sorting and CSV export.
 
-![Artikelliste mit Status, Fotos, Suche, Filter und Sortierung](docs/screenshots/artikel.png)
+![Item list with status, photos, search, filters and sorting](docs/screenshots/artikel.png)
 
 </details>
 
-## Schnellstart
+## Quick start
 
-GitHub baut bei jedem Push auf `main` ein fertiges Image für `amd64` und `arm64`:
-`ghcr.io/mysquat516/reseller-dashboard:latest`. Auf dem Server brauchst du nur die
+Every push to `main` builds a ready-made image for `amd64` and `arm64`:
+`ghcr.io/mysquat516/reseller-dashboard:latest`. On your server you only need the
 [`docker-compose.yml`](docker-compose.yml):
 
 ```bash
-docker compose pull      # neues Image holen
-docker compose up -d     # starten oder aktualisieren
+docker compose pull      # get the new image
+docker compose up -d     # start or update
 ```
 
-Danach ist das Dashboard unter `http://<server>:3000` erreichbar. Einen anderen Port wählst du beim Start,
-zum Beispiel mit `PORT=8080 docker compose up -d`. Ein Update besteht nur aus diesen beiden Befehlen.
-Neue Datenbankspalten werden beim Start automatisch ergänzt.
+The dashboard is then available at `http://<server>:3000`. To use another port, set it when starting,
+for example `PORT=8080 docker compose up -d`. Updating is just these two commands. New database columns
+are added automatically on start.
 
-> **Privates Paket?** Ob sich der Server anmelden muss, hängt von der Sichtbarkeit des Pakets ab
-> (GitHub → *Packages → reseller-dashboard → Package settings*). Ist es privat, einmal
-> `docker login ghcr.io -u <github-benutzer>` ausführen. Als Passwort dient ein Personal Access Token
-> (classic) mit dem Recht `read:packages`.
+> **Private package?** Whether the server has to log in depends on the package visibility
+> (GitHub → *Packages → reseller-dashboard → Package settings*). If it is private, run
+> `docker login ghcr.io -u <github-user>` once. Use a personal access token (classic) with the
+> `read:packages` scope as the password.
 
-Pro Build gibt es zusätzlich den Tag `sha-<commit>`, damit sich ein älterer Stand wiederherstellen lässt
-(`image: …:sha-abc1234`).
+Each build is also tagged `sha-<commit>`, so you can go back to an older version (`image: …:sha-abc1234`).
 
 <details>
-<summary><b>Selbst bauen oder ohne Docker starten</b></summary>
+<summary><b>Build it yourself or run without Docker</b></summary>
 
-**Selbst bauen:**
+**Build it yourself:**
 
 ```bash
 docker compose up -d --build
 ```
 
-Der Build läuft mit `network: host` (siehe `docker-compose.yml`), damit `npm ci` auch bei DNS-Problemen im
-Heimnetz funktioniert. Zum Aktualisieren den neuen Stand holen (`git pull` oder neues ZIP entpacken, den Ordner
-`data` behalten) und `docker compose up -d --build` ausführen.
+The build uses `network: host` (see `docker-compose.yml`) so that `npm ci` also works when DNS is unreliable
+on your home network. To update, get the new version (`git pull` or unpack a new ZIP, keep the `data` folder)
+and run `docker compose up -d --build`.
 
-**Ohne Docker:** Voraussetzung ist Node.js 20 oder 22 (darauf laufen die Tests). Für Node 24 gibt es für die
-eingesetzte better-sqlite3-Version keine fertigen Pakete. `npm install` müsste es dann selbst kompilieren und
-bräuchte dafür Python, make und einen C++-Compiler.
+**Without Docker:** You need Node.js 20 or 22 (the tests run on these). For Node 24 there are no prebuilt
+packages for the better-sqlite3 version in use, so `npm install` would have to compile it, which needs Python,
+make and a C++ compiler.
 
 ```bash
 npm install
-npm start      # http://localhost:3000, Daten landen in ./data
-npm test       # automatische Tests
+npm start      # http://localhost:3000, data goes to ./data
+npm test       # automated tests
 ```
 
 </details>
 
-## Konfiguration
+## Configuration
 
-Die meisten Einstellungen machst du im Tab **Einstellungen**: Standard-Zeitraum, Ladenhüter-Grenze
-(7 bis 365 Tage), optionales Monatsziel und Versandvorlagen. Sie gelten auf allen Geräten.
-Für den Container gibt es in der `docker-compose.yml` unter `environment:` außerdem diese Variablen:
+Most settings live in the **Einstellungen** (settings) tab: default time range, slow-mover threshold
+(7 to 365 days), an optional monthly goal and shipping presets. They apply to all devices.
+For the container, these variables go under `environment:` in `docker-compose.yml`:
 
-| Variable | Standard | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `TZ` | `Europe/Berlin` | Zeitzone |
-| `APP_PASSWORD` | leer | schaltet den Passwortschutz ein |
-| `APP_USER` | `admin` | Benutzername für den Login |
-| `SESSION_DAYS` | `90` | wie lange eine Anmeldung gilt |
-| `SESSION_SECRET` | zufällig | Schlüssel für Anmeldungen (Standard: Wert in `data/session-secret`) |
-| `BACKUP_AUTO` | an | `0` schaltet die tägliche Sicherung aus |
-| `BACKUP_KEEP` | `14` | wie viele Tage automatische Sicherungen bleiben |
-| `BACKUP_DIR` | `<Datenordner>/backups` | anderer Ort für die Sicherungen, zum Beispiel eine zweite Platte |
-| `MAX_RESTORE_MB` | `4096` | größte erlaubte Datei beim Einspielen eines Backups |
+| `TZ` | `Europe/Berlin` | time zone |
+| `APP_PASSWORD` | empty | turns on password protection |
+| `APP_USER` | `admin` | user name for the login |
+| `SESSION_DAYS` | `90` | how long a login stays valid |
+| `SESSION_SECRET` | random | key for logins (default: value in `data/session-secret`) |
+| `BACKUP_AUTO` | on | `0` turns off the daily backup |
+| `BACKUP_KEEP` | `14` | how many days of automatic backups are kept |
+| `BACKUP_DIR` | `<data folder>/backups` | another place for backups, for example a second disk |
+| `MAX_RESTORE_MB` | `4096` | largest file allowed when restoring a backup |
 
-Alle Daten (Datenbank `reseller.db` und Bilder in `uploads/`) liegen im Ordner `./data`.
+All data (database `reseller.db` and images in `uploads/`) lives in the `./data` folder.
 
-## Was zählt als Verkauf?
+## What counts as a sale?
 
-- **Reserviert** zählt noch nicht: Der Artikel gilt als unverkauft und bleibt im Lagerwert, aber nicht bei den Ladenhütern.
-- Ab **Noch nicht versendet** (sowie Versendet und Verkauft) zählt ein Artikel mit eingetragenem Verkaufspreis
-  als Verkauf und geht in Gewinn, Umsatz und Auswertungen ein, unabhängig vom Zahlungsstatus.
-  Noch nicht bezahlte Verkäufe stehen zusätzlich bei „Offene Zahlungen“.
-- Der Monat richtet sich nach „Verkauft am“, ersatzweise nach dem Anlegedatum.
-- **Gewinn = Verkaufspreis − Einkaufspreis − Gebühren − Versandkosten**
+- **Reserved** does not count yet: The item is still unsold and stays in the stock value, but not among the slow movers.
+- From **not shipped yet** onwards (and shipped and sold), an item with a sale price counts as a sale and goes into
+  profit, revenue and breakdowns, regardless of the payment status. Unpaid sales also show up under "open payments".
+- The month is based on the sale date, otherwise on the date the item was created.
+- **Profit = sale price − purchase price − fees − shipping costs**
 
-## Im Detail
+## In detail
 
 <details>
-<summary><b>Alle Funktionen</b></summary>
+<summary><b>All features</b></summary>
 
-- **Fotos:** bis zu 60 pro Artikel, Sortieren per Ziehen, Titelbild per Stern, Großansicht mit Pfeiltasten
-  und Wischen. Große Fotos werden vor dem Upload im Browser auf maximal 1800 px verkleinert.
-- **Artikelliste:** Sortierung (zuletzt/zuerst angelegt, Titel A–Z, Einkaufspreis, längste Standzeit; die Wahl
-  bleibt gespeichert) und Suche mit mehreren Wörtern in beliebiger Reihenfolge über Titel, Marke, Größe, Kategorie,
-  Zustand, Beschreibung, Plattform, Käufer, Notizen und Sendungsnummer. Die Trefferzahl steht über der Liste.
-  Standardmäßig zeigt die Liste nur aktive Artikel, verkaufte sind über den Filter erreichbar.
-- **Als Kopie anlegen:** legt eine Kopie samt Fotos an (praktisch für mehrere gleiche Teile). Status,
-  Verkaufs- und Versanddaten bleiben leer.
-- **Preise:** Einkauf, Einstellpreis, Verkaufspreis, Gebühren, Versandkosten und die zugehörigen Daten
-- **Versand:** Anbieter, Sendungsnummer mit Tracking-Link (DHL, Deutsche Post, Hermes, DPD, GLS, UPS) und
-  Versandvorlagen (Anbieter und Preis), die Anbieter und Versandkosten im Artikel ausfüllen
-- **Dashboard** mit Zeitraum-Schalter (Dieser Monat, 3 Monate, Dieses Jahr, Alles): Gewinn, Umsatz, Marge, ROI,
-  Standzeit, Preisabschlag und Auswertungen nach Plattform, Zahlungsart, Kategorie und Marke
-- **Zusatzkennzahlen** für den gewählten Zeitraum: Trefferquote, Ø Gewinn je Gewinn- und Ø Verlust je
-  Verlust-Verkauf, Gewinn pro Standtag, Ø Verkaufspreis und erwarteter Gewinn der offenen Posten
-  (bei Verkauf zum Einstellpreis)
-- **Monatskachel:** Gewinn des aktuellen Monats im Vergleich zum Vormonat bis zum gleichen Tag
-- **Monatsübersicht** als Diagramm und Tabelle, auch für Monate ohne Verkäufe
-- **Immer aktuell, unabhängig vom Zeitraum:** Lagerwert, Bestand, offene Zahlungen und Ladenhüter
-  (Grenze einstellbar, Standard 60 Tage)
-- **Verkäufe-Ansicht:** sortierbare Tabelle mit Summenzeile, Suche und Plattform-Filter, beste und schwächste
-  Verkäufe. Ein Klick auf eine Zeile öffnet den Artikel.
-- **Analyse-Diagramme:** kumulierter Gewinn über die Zeit, Streudiagramm Einkaufs- gegen Verkaufspreis je
-  Artikel (Gewinn als Kreis, Verlust als Dreieck, Linie „Verkauf = Einkauf“) und Gewinn nach Plattform,
-  Kategorie oder Marke. Zu Verlauf und Gruppen gibt es die Werte auch als Tabelle.
-- **CSV-Export** (UTF-8, Semikolon, Dezimalkomma): alle, nur verkaufte oder nur unverkaufte Artikel,
-  optional für einen Zeitraum (Verkaufs- oder Kaufdatum)
-- **Formularhinweis**, wenn „Verkauft am“ vor „Online seit“ liegt
+- **Photos:** up to 60 per item, reorder by dragging, choose the cover photo with a star, full-size view with
+  arrow keys and swiping. Large photos are scaled down to at most 1800 px in the browser before uploading.
+- **Item list:** sorting (newest/oldest first, title A–Z, purchase price, longest in stock; your choice is
+  remembered) and search with several words in any order across title, brand, size, category, condition,
+  description, platform, buyer, notes and tracking number. The number of matches is shown above the list.
+  By default the list only shows active items, sold items are available through the filter.
+- **Create as copy:** creates a copy including photos (handy for several identical pieces). Status, sale and
+  shipping details stay empty.
+- **Prices:** purchase price, listing price, sale price, fees, shipping costs and the matching dates
+- **Shipping:** carrier, tracking number with a tracking link (DHL, Deutsche Post, Hermes, DPD, GLS, UPS) and
+  shipping presets (carrier and price) that fill in carrier and shipping costs on the item
+- **Dashboard** with a time range switch (this month, 3 months, this year, all): profit, revenue, margin, ROI,
+  time to sell, price reduction and breakdowns by platform, payment method, category and brand
+- **Extra key figures** for the chosen range: hit rate, average profit per profitable sale and average loss per
+  losing sale, profit per day in stock, average sale price and expected profit of open items
+  (if sold at the listing price)
+- **Month tile:** profit of the current month compared with the previous month up to the same day
+- **Monthly overview** as a chart and table, including months without sales
+- **Always current, regardless of the time range:** stock value, inventory, open payments and slow movers
+  (threshold adjustable, default 60 days)
+- **Sales view:** sortable table with a totals row, search and platform filter, best and worst sales.
+  Clicking a row opens the item.
+- **Analysis charts:** cumulative profit over time, scatter chart of purchase vs. sale price per item
+  (profit as a circle, loss as a triangle, line "sale = purchase") and profit by platform, category or brand.
+  The values for the timeline and groups are also available as a table.
+- **CSV export** (UTF-8, semicolon, decimal comma): all, only sold or only unsold items, optionally for a
+  time range (sale or purchase date)
+- **Form hint** when the sale date is before the "online since" date
 
 </details>
 
 <details>
-<summary><b>Backup und Wiederherstellung</b></summary>
+<summary><b>Backup and restore</b></summary>
 
-Im Tab **Einstellungen → Daten & Backup**:
+In the **Einstellungen → Daten & Backup** tab:
 
-- **Backup herunterladen:** eine ZIP-Datei mit Datenbank und allen Fotos. Sie zeigt den Stand zum Zeitpunkt des
-  Klicks und ist auch bei laufendem Betrieb konsistent.
-- **Backup einspielen:** ersetzt alle Artikel, Fotos, Versandvorlagen und Einstellungen durch den Stand aus einer
-  ZIP-Datei. Eine einzelne `.db`-Datei geht auch, zum Beispiel eine automatische Sicherung, dann bleiben die Fotos,
-  wie sie sind. Vorher legt der Server automatisch eine **Sicherheitskopie des jetzigen Stands mit Fotos** an
-  (`backups/pre-restore-….zip`, die letzten 2 bleiben). Ist die Datei ungültig oder beschädigt, wird nichts
-  verändert. Backups aus älteren Versionen funktionieren ebenfalls.
-- **Automatische Sicherung:** Einmal pro Tag wird die Datenbank (ohne Fotos) nach `backups/auto-JJJJ-MM-TT.db`
-  kopiert, die letzten 14 Tage bleiben. Das schützt vor Bedienfehlern, aber nicht vor einem Festplattenausfall,
-  weil der Ordner im selben Datenverzeichnis liegt. Lade deshalb ab und zu ein vollständiges Backup herunter
-  oder sichere `./data` zusätzlich extern.
+- **Download backup:** a ZIP file with the database and all photos. It reflects the moment you click and is
+  consistent even while the app is running.
+- **Restore backup:** replaces all items, photos, shipping presets and settings with the contents of a ZIP file.
+  A single `.db` file works too, for example an automatic backup, in which case the photos stay as they are.
+  Before that, the server automatically creates a **safety copy of the current state including photos**
+  (`backups/pre-restore-….zip`, the last 2 are kept). If the file is invalid or damaged, nothing is changed.
+  Backups from older versions work as well.
+- **Automatic backup:** Once a day the database (without photos) is copied to `backups/auto-YYYY-MM-DD.db`,
+  the last 14 days are kept. This protects against mistakes, but not against a disk failure, because the folder
+  is on the same data volume. So download a full backup now and then, or back up `./data` externally as well.
 
-Wer `./data` von Hand kopiert, stoppt vorher den Container (`docker compose stop`). Die Datenbank läuft im
-WAL-Modus, eine Kopie bei laufender App kann die letzten Änderungen verlieren oder unvollständig sein.
+If you copy `./data` by hand, stop the container first (`docker compose stop`). The database runs in WAL mode,
+and a copy taken while the app is running can miss the latest changes or be incomplete.
 
-Der Container läuft aus Sicherheitsgründen nicht als root, sondern als Benutzer `node`. Beim ersten Start nach
-einem Update setzt er den Besitzer von `./data` automatisch darauf, das kann bei vielen Fotos kurz dauern.
-Ob die App gesund ist, zeigt `docker ps` (Status `healthy`), dafür fragt Docker `/healthz` ab.
+For security, the container does not run as root but as the user `node`. On the first start after an update it
+changes the owner of `./data` to that user automatically, which can take a moment with many photos.
+`docker ps` shows whether the app is healthy (status `healthy`), using `/healthz`.
 
 </details>
 
 <details>
-<summary><b>Passwortschutz</b></summary>
+<summary><b>Password protection</b></summary>
 
-Ohne `APP_PASSWORD` hat die App keinen Login. Betreibe sie dann nur im Heimnetz oder per VPN.
-Zum Einschalten in der `docker-compose.yml` unter `environment:`:
+Without `APP_PASSWORD` the app has no login. In that case only run it on your home network or over a VPN.
+To turn it on, add this under `environment:` in `docker-compose.yml`:
 
 ```yaml
-      APP_PASSWORD: ein-langes-passwort
-      # APP_USER: admin          # Benutzername, Standard: admin
+      APP_PASSWORD: a-long-password
+      # APP_USER: admin          # user name, default: admin
 ```
 
-Danach zeigt jede Seite zuerst eine Anmeldeseite. Die Anmeldung gilt 90 Tage (Cookie bzw. Token), bis du dich
-unter Einstellungen → Sicherheit abmeldest oder das Passwort änderst. Das meldet überall ab.
+Every page then shows a login page first. A login stays valid for 90 days (cookie or token) until you log out
+under Einstellungen → Sicherheit or change the password, which logs out everywhere.
 
-- **Face ID am iPhone:** Die Anmeldeseite ist ein normales Formular. Speicherst du die Zugangsdaten im
-  iPhone-Passwortmanager, füllt Safari sie nach einer Face-ID-Prüfung aus.
-- Nach 5 falschen Versuchen sperrt der Server die Anmeldung für 5 Minuten. Das Passwort wird zeitkonstant verglichen.
-- Ohne HTTPS laufen Passwort und Cookie im Klartext durchs Netz (im WireGuard-VPN ist das verschlüsselt).
-  Hinter einem HTTPS-Proxy bekommt das Cookie automatisch das `Secure`-Flag (Header `X-Forwarded-Proto`).
-- Öffentlich bleiben nur die Anmeldeseite, `/healthz`, das Logo und die Icons.
-- Für Skripte und Apps: `POST /api/login` mit `{"username": …, "password": …}` liefert ein Cookie und ein Token,
-  das als `Authorization: Bearer <token>` mitgeschickt werden kann.
-- Die iOS-App kann sich noch nicht anmelden (geplant zusammen mit der Face-ID-Sperre). Schalte den
-  Passwortschutz bis dahin nur ein, wenn du die iOS-App nicht nutzt.
-
-</details>
-
-<details>
-<summary><b>Als App auf dem Handy nutzen</b></summary>
-
-Die Weboberfläche ist für Handys ausgelegt und lässt sich wie eine App auf den Homescreen legen:
-
-- **iPhone (Safari):** Teilen-Symbol → „Zum Home-Bildschirm“. Danach öffnet sich die App im Vollbild.
-- **Android (Chrome):** Menü → „Zum Startbildschirm hinzufügen“. Als vollständig installierte App bietet
-  Chrome das nur über HTTPS an.
-
-Das funktioniert auch über reines HTTP (`http://<server-ip>:3000`). Einen Offline-Modus gibt es nicht, die App
-braucht immer eine Verbindung zum Server. Von unterwegs verbindest du dich erst per VPN (z. B. WireGuard) ins
-Heimnetz und öffnest dann dieselbe Adresse.
-
-**iOS-App:** Im Ordner [`ios/`](ios/README.md) liegt eine native SwiftUI-App für iPhone und iPad, die dieselbe API
-nutzt. Die Daten bleiben auf dem Server. Bisher gibt es die Artikelliste mit Suche und Filter sowie Anlegen,
-Bearbeiten und Löschen. Fotos, Dashboard, Versandvorlagen und CSV folgen. Die Einrichtung mit Xcode und XcodeGen
-steht in [`ios/README.md`](ios/README.md).
+- **Face ID on the iPhone:** The login page is a normal form. If you save the credentials in the iPhone password
+  manager, Safari fills them in after a Face ID check.
+- After 5 wrong attempts the server blocks logins for 5 minutes. The password is compared in constant time.
+- Without HTTPS, password and cookie travel over the network in plain text (inside a WireGuard VPN they are
+  encrypted). Behind an HTTPS proxy the cookie automatically gets the `Secure` flag (header `X-Forwarded-Proto`).
+- Only the login page, `/healthz`, the logo and the icons stay public.
+- For scripts and apps: `POST /api/login` with `{"username": …, "password": …}` returns a cookie and a token
+  that can be sent as `Authorization: Bearer <token>`.
+- The iOS app cannot log in yet (planned together with the Face ID lock). Until then, only turn on password
+  protection if you do not use the iOS app.
 
 </details>
 
 <details>
-<summary><b>CSV-Import: Spalten und Formate</b></summary>
+<summary><b>Use it as an app on your phone</b></summary>
 
-Zu finden unter **Einstellungen → „Artikel aus CSV importieren“**. Liest Listen aus Excel, Numbers oder Google
-Sheets und den eigenen CSV-Export ein. Zuerst gibt es eine Vorschau mit Fehlern (Zeilennummer wie in Excel) und
-Hinweisen, gespeichert wird erst nach Bestätigung. Trennzeichen (Semikolon, Komma, Tab) und Zeichensatz (UTF-8,
-Excel-„ANSI“, UTF-16) werden automatisch erkannt. Mögliche Duplikate (gleicher Titel, Einkaufspreis und Kaufdatum
-wie ein vorhandener Artikel) lassen sich überspringen, sodass sich dieselbe Datei gefahrlos zweimal einlesen lässt.
-Eine Vorlage zum Ausfüllen gibt es per Button.
+The web interface is designed for phones and can be added to your home screen like an app:
 
-Die erste Zeile enthält die Spaltennamen, nur „Titel“ ist Pflicht. Groß- und Kleinschreibung, Bindestriche und
-Umlaute spielen keine Rolle. Erkannt werden diese Spalten (mit gängigen Alternativen):
+- **iPhone (Safari):** share icon → "Add to Home Screen". The app then opens full screen.
+- **Android (Chrome):** menu → "Add to Home screen". Chrome only offers it as a fully installed app over HTTPS.
 
-| Feld | Spaltenname (Alternativen) |
+This also works over plain HTTP (`http://<server-ip>:3000`). There is no offline mode, the app always needs a
+connection to the server. When you are away, connect to your home network via VPN (e.g. WireGuard) first and
+then open the same address.
+
+**iOS app:** The [`ios/`](ios/README.md) folder contains a native SwiftUI app for iPhone and iPad that uses the
+same API. The data stays on the server. So far it has the item list with search and filters as well as creating,
+editing and deleting items. Photos, dashboard, shipping presets and CSV will follow. Setup with Xcode and
+XcodeGen is described in [`ios/README.md`](ios/README.md).
+
+</details>
+
+<details>
+<summary><b>CSV import: columns and formats</b></summary>
+
+Available under **Einstellungen → "Artikel aus CSV importieren"**. It reads lists from Excel, Numbers or Google
+Sheets as well as the app's own CSV export. First you get a preview with errors (row numbers as in Excel) and
+hints, nothing is saved until you confirm. Delimiter (semicolon, comma, tab) and encoding (UTF-8, Excel "ANSI",
+UTF-16) are detected automatically. Possible duplicates (same title, purchase price and purchase date as an
+existing item) can be skipped, so importing the same file twice is safe. A template is available via a button.
+
+The first row contains the column names, only "Titel" (title) is required. Upper and lower case, hyphens and
+umlauts do not matter. The import currently recognizes **German column names** (with common alternatives):
+
+| Field | Column name (alternatives) |
 |---|---|
-| Titel | Titel (Artikel, Bezeichnung, Name, Produkt) |
-| Beschreibung, Größe, Kategorie, Marke, Zustand | gleichnamig (Größe: Size, Marke: Brand/Hersteller) |
+| Title | Titel (Artikel, Bezeichnung, Name, Produkt) |
+| Description, size, category, brand, condition | Beschreibung, Größe (Size), Kategorie, Marke (Brand/Hersteller), Zustand |
 | Status | Status: Lager, Online, Reserviert, Noch nicht versendet (zu versenden, gekauft), Versendet, Verkauft |
-| Einkaufspreis, Gekauft am | EK, Kaufpreis · Kaufdatum, Einkaufsdatum |
-| Einstellpreis, Online seit | Angebotspreis · Eingestellt am |
-| Verkaufspreis, Verkauft am | VK, VK-Preis, Erlös · Verkaufsdatum |
-| Plattform, Käufer, Zahlungsart, Zahlungsstatus | Marktplatz · Kunde · Zahlungsmethode · bezahlt/offen |
-| Gebühren, Versandkosten | Provision · Porto, Versand |
-| Versandanbieter, Sendungsnummer, Notizen | Carrier · Tracking · Notiz, Bemerkung |
+| Purchase price, purchase date | Einkaufspreis (EK, Kaufpreis) · Gekauft am (Kaufdatum, Einkaufsdatum) |
+| Listing price, online since | Einstellpreis (Angebotspreis) · Online seit (Eingestellt am) |
+| Sale price, sale date | Verkaufspreis (VK, VK-Preis, Erlös) · Verkauft am (Verkaufsdatum) |
+| Platform, buyer, payment method, payment status | Plattform (Marktplatz) · Käufer (Kunde) · Zahlungsart (Zahlungsmethode) · Zahlungsstatus (bezahlt/offen) |
+| Fees, shipping costs | Gebühren (Provision) · Versandkosten (Porto, Versand) |
+| Carrier, tracking number, notes | Versandanbieter (Carrier) · Sendungsnummer (Tracking) · Notizen (Notiz, Bemerkung) |
 
-Spalten wie ID, Gewinn und Bilder (aus dem eigenen Export) werden ignoriert, unbekannte Spalten ebenfalls.
-Die Vorschau nennt sie.
+Columns such as ID, profit and images (from the app's own export) are ignored, and so are unknown columns.
+The preview lists them.
 
-- **Zahlen:** `12,50`, `12.5`, `1.234,56`, `1,234.56` und `12 €` sind möglich. Negative Beträge und mehr als
-  zwei Nachkommastellen werden als Fehler gemeldet.
-- **Datum:** `05.03.2026`, `5.3.26` und `2026-03-05` (auch mit Uhrzeit). Ungültige Tage wie der 31.02. sind Fehler.
-- **Status leer:** Mit Verkaufspreis wird daraus „Verkauft“, sonst „Lager“.
-- **Hinweise** (der Import klappt trotzdem): Status „Verkauft“ ohne Verkaufspreis (zählt nicht als Verkauf),
-  Verkaufspreis ohne Verkaufsstatus, fehlendes Verkaufsdatum (es zählt dann der Importtag), Verkaufsdatum vor
-  dem Kaufdatum.
-- **Excel:** „Speichern unter“ → „CSV (Trennzeichen-getrennt)“ oder „CSV UTF-8“. Eine `.xlsx`-Datei kann nicht
-  gelesen werden, die App sagt das dann.
-- Der Import legt nur neue Artikel an und ändert keine vorhandenen. Fotos lassen sich nicht per CSV importieren.
+- **Numbers:** `12,50`, `12.5`, `1.234,56`, `1,234.56` and `12 €` all work. Negative amounts and more than two
+  decimal places are reported as errors.
+- **Dates:** `05.03.2026`, `5.3.26` and `2026-03-05` (also with a time). Invalid days such as 31 February are errors.
+- **Empty status:** With a sale price it becomes "Verkauft" (sold), otherwise "Lager" (in stock).
+- **Hints** (the import still works): status "Verkauft" without a sale price (does not count as a sale), sale price
+  without a sold status, missing sale date (the import day counts instead), sale date before the purchase date.
+- **Excel:** "Save as" → "CSV (comma delimited)" or "CSV UTF-8". An `.xlsx` file cannot be read, the app tells you so.
+- The import only creates new items and never changes existing ones. Photos cannot be imported via CSV.
 
 </details>
 
 <details>
 <summary><b>API</b></summary>
 
-| Methode | Pfad | Zweck |
+| Method | Path | Purpose |
 |---|---|---|
-| GET | `/api/items` | alle Artikel inkl. Bilder |
-| GET | `/api/items/:id` | ein Artikel inkl. Bilder |
-| POST | `/api/items` | Artikel anlegen |
-| PUT | `/api/items/:id` | Artikel ändern |
-| POST | `/api/items/:id/duplicate` | Kopie anlegen: Beschreibung, Einkaufsdaten, Einstellpreis, Notizen und Fotos werden übernommen, Status `lager`, Verkaufs- und Versanddaten leer; Antwort `{ id, images, skippedImages }` |
-| DELETE | `/api/items/:id` | Artikel samt Bildern löschen |
-| POST | `/api/items/:id/images` | Bilder hochladen (multipart, Feld `images`) |
-| DELETE | `/api/images/:id` | einzelnes Bild löschen |
-| PUT | `/api/items/:id/images/order` | Bildreihenfolge speichern |
-| GET | `/api/stats?period=month\|3m\|year\|all&dead=7..365` | Kennzahlen fürs Dashboard (`dead` fehlt: Einstellung) |
-| GET | `/api/sales?period=month\|3m\|year\|all` | alle Verkäufe im Zeitraum mit Gewinn, Marge und Standzeit |
-| GET | `/api/export.csv` | Artikel als CSV; optional `?scope=all\|sold\|unsold&by=sold\|purchase&from=JJJJ-MM-TT&to=JJJJ-MM-TT` (Zeitraum inklusive, `by` ist das Datum, auf das er sich bezieht, Standard `sold`; ungültige Werte → 400) |
-| GET/POST | `/api/shipping-presets` | Versandvorlagen auflisten / anlegen |
-| PUT/DELETE | `/api/shipping-presets/:id` | Versandvorlage ändern / löschen |
-| POST | `/api/login` | Anmelden (nur mit `APP_PASSWORD`): Cookie und Token |
-| POST | `/api/logout` | Abmelden |
-| GET | `/api/session` | `{auth, user}`: ist der Passwortschutz aktiv, und wer ist angemeldet |
-| GET | `/api/backup` | vollständiges Backup (ZIP mit Datenbank und Fotos) herunterladen |
-| POST | `/api/restore` | Backup einspielen (multipart, Feld `backup`: ZIP oder `.db`), ersetzt alle Daten |
-| GET | `/api/backups` | Liste der Sicherungen im Ordner `backups` (automatisch und vor dem Einspielen) |
-| GET | `/api/backups/:name` | eine dieser Sicherungen herunterladen |
-| POST | `/api/import.csv` | Artikel aus CSV importieren; Body ist die Datei als Text (`Content-Type: text/csv`, max. 5 MB und 5000 Zeilen). `?dry=1` prüft nur und legt nichts an (Vorschau), `?skipDuplicates=0` importiert auch mögliche Duplikate. Antwort: erkannte Spalten, Anzahl gültig/Duplikate/Fehler, Fehler und Hinweise mit Zeilennummer, Beispielzeilen |
-| GET/PUT | `/api/settings` | Einstellungen lesen / ändern (`default_period`, `dead_days`, `monthly_goal`; PUT nimmt auch einzelne Felder) |
-| GET | `/healthz` | Healthcheck für Docker (`{ok: true}`), auch mit Passwortschutz ohne Anmeldung erreichbar |
+| GET | `/api/items` | all items including images |
+| GET | `/api/items/:id` | one item including images |
+| POST | `/api/items` | create an item |
+| PUT | `/api/items/:id` | update an item |
+| POST | `/api/items/:id/duplicate` | create a copy: description, purchase details, listing price, notes and photos are copied, status `lager`, sale and shipping details empty; response `{ id, images, skippedImages }` |
+| DELETE | `/api/items/:id` | delete an item and its images |
+| POST | `/api/items/:id/images` | upload images (multipart, field `images`) |
+| DELETE | `/api/images/:id` | delete a single image |
+| PUT | `/api/items/:id/images/order` | save the image order |
+| GET | `/api/stats?period=month\|3m\|year\|all&dead=7..365` | key figures for the dashboard (without `dead`: the setting is used) |
+| GET | `/api/sales?period=month\|3m\|year\|all` | all sales in the range with profit, margin and time to sell |
+| GET | `/api/export.csv` | items as CSV; optional `?scope=all\|sold\|unsold&by=sold\|purchase&from=YYYY-MM-DD&to=YYYY-MM-DD` (range inclusive, `by` is the date it refers to, default `sold`; invalid values → 400) |
+| GET/POST | `/api/shipping-presets` | list / create shipping presets |
+| PUT/DELETE | `/api/shipping-presets/:id` | update / delete a shipping preset |
+| POST | `/api/login` | log in (only with `APP_PASSWORD`): cookie and token |
+| POST | `/api/logout` | log out |
+| GET | `/api/session` | `{auth, user}`: whether password protection is on and who is logged in |
+| GET | `/api/backup` | download a full backup (ZIP with database and photos) |
+| POST | `/api/restore` | restore a backup (multipart, field `backup`: ZIP or `.db`), replaces all data |
+| GET | `/api/backups` | list of backups in the `backups` folder (automatic and before restoring) |
+| GET | `/api/backups/:name` | download one of these backups |
+| POST | `/api/import.csv` | import items from CSV; the body is the file as text (`Content-Type: text/csv`, max. 5 MB and 5000 rows). `?dry=1` only checks and creates nothing (preview), `?skipDuplicates=0` also imports possible duplicates. Response: recognized columns, number of valid rows/duplicates/errors, errors and hints with row numbers, sample rows |
+| GET/PUT | `/api/settings` | read / change settings (`default_period`, `dead_days`, `monthly_goal`; PUT also accepts single fields) |
+| GET | `/healthz` | health check for Docker (`{ok: true}`), reachable without login even with password protection |
 
 </details>
 
 <details>
 <summary><b>Tests</b></summary>
 
-`npm test` führt die automatischen Tests aus (`node --test`, keine zusätzlichen Pakete, etwa 12 Sekunden).
+`npm test` runs the automated tests (`node --test`, no extra packages, about 12 seconds).
 
-Die Server-Tests starten pro Testdatei den **echten Server** (`node server.js`) auf einem freien Port mit einem
-leeren Temp-Datenordner und sprechen ihn über HTTP an. Deine echten Daten in `data/` werden dabei nie berührt.
+The server tests start the **real server** (`node server.js`) for each test file on a free port with an empty
+temporary data folder and talk to it over HTTP. Your real data in `data/` is never touched.
 
-| Datei | Prüft |
+| File | Checks |
 | --- | --- |
-| `test/items.test.js` | Artikel (Anlegen, Ändern, Eingabeprüfung, kaputtes JSON), Kopieren, Versandvorlagen, Einstellungen, Foto-Upload (Dateikopf-Prüfung, Reihenfolge, Löschen) |
-| `test/stats.test.js` | Kennzahlen und Verkaufsliste mit festem Datensatz: Gewinn, Zeiträume, Monatsliste, Ladenhüter, Verkauf ohne Datum oder Preis |
-| `test/exportimport.test.js` | CSV-Export (Format, Auswahl, Formelschutz), CSV-Import über die API, Rundlauf Export → Import |
-| `test/backup.test.js` | Backup-ZIP, Wiederherstellen (auch alte Versionen, kaputte und böswillige ZIPs), automatische Sicherung |
-| `test/auth.test.js` | Passwortschutz: gesperrte Routen, Anmelden, Token, Ablauf, Bremse bei Fehlversuchen, Weiterleitungen |
-| `test/csvimport.test.js` | Import-Logik einzeln (Zahlen, Datum, Trennzeichen, Zeichensätze) |
-| `test/packaging.test.js` | Docker-Image enthält alle Server-Dateien, Abhängigkeiten, Skripte der Oberfläche ohne Namenskonflikte |
+| `test/items.test.js` | items (create, update, validation, broken JSON), copying, shipping presets, settings, photo upload (file header check, order, deletion) |
+| `test/stats.test.js` | key figures and sales list with a fixed data set: profit, time ranges, month list, slow movers, sales without date or price |
+| `test/exportimport.test.js` | CSV export (format, selection, formula protection), CSV import via the API, round trip export → import |
+| `test/backup.test.js` | backup ZIP, restore (including old versions, broken and malicious ZIPs), automatic backup |
+| `test/auth.test.js` | password protection: locked routes, login, token, expiry, brake on failed attempts, redirects |
+| `test/csvimport.test.js` | import logic on its own (numbers, dates, delimiters, encodings) |
+| `test/packaging.test.js` | the Docker image contains all server files, dependencies and frontend scripts without name clashes |
 
-Hilfsfunktionen (Server starten, Testbilder, ZIP-Dateien) liegen in `testlib/`, nicht in `test/`, weil
-`node --test` jede Datei in `test/` als Test ausführt. Die GitHub-Action `.github/workflows/test.yml` startet die
-Tests bei jedem Push und Pull Request mit Node 20 (wie im Docker-Image) und Node 22.
+Helpers (starting the server, test images, ZIP files) live in `testlib/`, not in `test/`, because `node --test`
+runs every file in `test/` as a test. The GitHub Action `.github/workflows/test.yml` runs the tests on every push
+and pull request with Node 20 (as in the Docker image) and Node 22.
 
-Nicht automatisch getestet werden die Oberfläche im Browser (die wird von Hand geprüft) und die iOS-App
-(eigener Workflow `ios.yml`).
+Not tested automatically: the web interface in the browser (checked by hand) and the iOS app (separate workflow `ios.yml`).
 
 </details>
 
-## Aufbau
+## Project layout
 
-| Teil | Inhalt |
+| Part | Contents |
 |---|---|
-| `server.js` | Express-Server, API und Datenbank (SQLite über better-sqlite3) |
-| `auth.js`, `backup.js`, `csvimport.js` | Passwortschutz, Backups, CSV-Import |
-| `public/` | Oberfläche in Vanilla-JS mit Chart.js, Icons und Manifest für den Homescreen |
-| `ios/` | native SwiftUI-App für iPhone und iPad |
-| `test/`, `testlib/` | automatische Tests und Hilfsfunktionen |
+| `server.js` | Express server, API and database (SQLite via better-sqlite3) |
+| `auth.js`, `backup.js`, `csvimport.js` | password protection, backups, CSV import |
+| `public/` | web interface in vanilla JS with Chart.js, icons and manifest for the home screen |
+| `ios/` | native SwiftUI app for iPhone and iPad |
+| `test/`, `testlib/` | automated tests and helpers |
 
 ---
 
-<sub>Diese App wurde mit Hilfe von KI (Claude von Anthropic) entwickelt. Idee, Anforderungen und Tests kommen
-vom Projektinhaber, der Code wurde KI-gestützt geschrieben. Bitte vor dem produktiven Einsatz selbst prüfen.</sub>
+<sub>This app was built with the help of AI (Claude by Anthropic). The idea, requirements and tests come from
+the project owner, the code was written with AI assistance. Please review it yourself before using it in production.</sub>
