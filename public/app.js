@@ -140,12 +140,12 @@ function renderItems() {
     : '';
   $('#items-list').innerHTML = list.length ? list.map(i => `
     <article class="item" data-id="${i.id}" tabindex="0" role="button">
-      <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '📷'}${i.images.length > 1 ? `<span class="count">📷 ${i.images.length}</span>` : ''}</div>
+      <div class="img">${i.images[0] ? `<img loading="lazy" src="${esc(i.images[0].url)}" alt="">` : '<svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>'}${i.images.length > 1 ? `<span class="count"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>${i.images.length}</span>` : ''}</div>
       <div class="body">
         <span class="badge ${i.status}">${esc(STATUS_LABEL[i.status] || i.status)}</span>
         <div class="title">${esc(i.title)}</div>
         <div class="meta">${esc([i.brand, i.size, i.category].filter(Boolean).join(' · '))}${sortKey === 'standing' && standingDays(i) != null ? `${i.brand || i.size || i.category ? ' · ' : ''}${standingDays(i)} ${standingDays(i) === 1 ? 'Tag' : 'Tage'}` : ''}</div>
-        ${i.tracking_number ? `<div class="track">📦 ${esc([i.carrier, i.tracking_number].filter(Boolean).join(' · '))}</div>` : ''}
+        ${i.tracking_number ? `<div class="track"><svg class="icon" aria-hidden="true"><use href="#i-package"/></svg>${esc([i.carrier, i.tracking_number].filter(Boolean).join(' · '))}</div>` : ''}
         <div class="price"><span>EK ${eur(i.purchase_price)}</span><span>${i.sold_price != null ? 'VK ' + eur(i.sold_price) : i.listing_price != null ? 'Angebot ' + eur(i.listing_price) : ''}</span></div>
       </div>
     </article>`).join('') : '<p class="empty">Keine Artikel gefunden.</p>';
@@ -813,7 +813,7 @@ async function renderStats() {
     { h: 'Artikel', f: r => esc(r.title) },
     { h: 'Tage', r: 1, f: r => r.days },
     { h: 'EK', r: 1, f: r => eur(r.purchase_price) }
-  ]) : '<p class="empty">Keine Ladenhüter 🎉</p>';
+  ]) : '<p class="empty">Keine Ladenhüter.</p>';
 }
 
 // Während des Ladens bleibt der alte Stand sichtbar (gedimmt), statt zu verschwinden
