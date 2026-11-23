@@ -56,7 +56,17 @@ function renderCumulative(rows, c) {
         } }
       },
       scales: {
-        x: { type: 'linear', bounds: 'data', grid: { display: false }, ticks: { precision: 0, maxTicksLimit: 7, includeBounds: false, callback: v => (Number.isInteger(v) ? tickDate(v) : '') } },
+        x: { type: 'linear', bounds: 'data', grid: { display: false }, ticks: { precision: 0, maxTicksLimit: 7, includeBounds: false, callback: v => (Number.isInteger(v) ? tickDate(v) : '') },
+          // Chart.js setzt bei bounds: 'data' Anfang und Ende als zusätzliche Striche. Liegt ein normaler Strich
+          // näher als eine halbe Schrittweite daran, überlappen die Datumslabels: dann fällt der normale Strich weg.
+          afterBuildTicks: axis => {
+            const t = axis.ticks;
+            if (t.length < 3) return;
+            const gaps = t.slice(1).map((x, i) => x.value - t[i].value).sort((a, b) => a - b);
+            const half = gaps[Math.floor(gaps.length / 2)] / 2;
+            axis.ticks = t.filter((x, i) => i === 0 || i === t.length - 1
+              || (x.value - t[i - 1].value >= half && t[i + 1].value - x.value >= half));
+          } },
         y: { ticks: { callback: v => eur0(v) }, grid: { color: ctx => (ctx.tick.value === 0 ? c.muted : c.border) } }
       }
     }
