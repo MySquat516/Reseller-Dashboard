@@ -52,7 +52,7 @@ async function loadBackups() {
         ? `Automatisch · ${d.toLocaleDateString('de-DE', { dateStyle: 'medium' })}`
         : `Vor Wiederherstellung · ${d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}`;
       return `<div class="bk-row"><span class="grow">${esc(label)} <span class="muted">· ${fmtSize(f.size)}${f.kind === 'auto' ? ' · nur Datenbank' : ''}</span></span>
-        <a class="btn" href="/api/backups/${encodeURIComponent(f.name)}" download>⬇ Laden</a></div>`;
+        <a class="btn" href="/api/backups/${encodeURIComponent(f.name)}" download><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>Laden</a></div>`;
     }).join('') : '<p class="empty">Noch keine Sicherungen vorhanden.</p>';
   } catch (err) {
     $('#bk-list').innerHTML = '';
