@@ -166,7 +166,9 @@ h1 { display: flex; align-items: center; gap: 10px; }
 .ship-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .item .track { font-size: 0.765rem; color: var(--muted); overflow-wrap: anywhere; }
 @media (max-width: 640px) { .row3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .row3 button { grid-column: 1 / -1; } }
-a.btn { display: inline-flex; align-items: center; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface2, var(--surface)); color: var(--text); text-decoration: none; font-size: 0.824rem; }
+/* Link-Buttons (Downloads) sehen aus wie normale Buttons: gleiche Fläche, Schrift und Abstände */
+a.btn { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text); text-decoration: none; }
+a.btn:hover { border-color: var(--accent); }
 
 /* Mobile: Tab-Leiste unten, Plus-Button in Daumenreichweite, Artikel als Liste
    (HIG tab-bars.md, lists-and-tables.md, designing-for-ios.md) */
@@ -299,7 +301,8 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 #period-hint { flex-basis: 100%; margin: 0; }
 .kpi-toggle { display: none; }
 @media (max-width: 760px) {
-  .kpi-toggle { display: block; width: 100%; margin: -4px 0 16px; background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+  /* Links statt volle Breite: so liegt der Plus-Button unten rechts nie darüber */
+  .kpi-toggle { display: block; width: auto; margin: -4px 0 16px; background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
   .kpis:not(.expanded) .kpi-extra { display: none; }
 }
 @media (max-width: 760px) { .info-btn { align-self: flex-start; margin-left: -10px; } }
@@ -416,3 +419,8 @@ a.btn.disabled { opacity: .5; pointer-events: none; }
 .dlg-dup + .dlg-dup-hint + .dlg-delete { margin-top: 12px; }
 #items-count { margin: -6px 0 10px; min-height: 1.2em; }
 .filters select { flex: 0 1 auto; }
+/* Desktop: Suche, Export und Filter in einer Zeile statt je einer vollen Zeile pro Auswahl */
+@media (min-width: 761px) {
+  .filters select { width: auto; }
+  .filters input { min-width: 14em; }
+}
