@@ -61,12 +61,12 @@ struct ItemFormView: View {
                             systemImage: "exclamationmark.triangle"
                         )
                         .font(.footnote)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.warn)
                     }
                     if draft.hasInvalidNumbers {
                         Label("Mindestens ein Preisfeld enthält keine gültige Zahl.", systemImage: "xmark.octagon")
                             .font(.footnote)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.bad)
                     }
                 }
             }
@@ -102,7 +102,7 @@ struct ItemFormView: View {
             if let profit = draft.profit {
                 Section("Ergebnis") {
                     LabeledContent("Gewinn") {
-                        Text(profit.eur).bold().foregroundStyle(profit >= 0 ? Color.green : Color.red)
+                        Text(profit.eur).bold().foregroundStyle(profit < 0 ? Color.bad : Color.primary)
                     }
                     if let margin = draft.margin {
                         LabeledContent("Marge", value: margin.percentText)

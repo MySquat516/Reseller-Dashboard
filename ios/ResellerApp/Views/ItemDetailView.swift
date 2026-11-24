@@ -54,7 +54,7 @@ struct ItemDetailView: View {
                 row("Versandkosten", item.shippingCost.flatMap { $0 > 0 ? $0.eur : nil })
                 if let profit = item.profit {
                     LabeledContent("Gewinn") {
-                        Text(profit.eur).bold().foregroundStyle(profit >= 0 ? Color.green : Color.red)
+                        Text(profit.eur).bold().foregroundStyle(profit < 0 ? Color.bad : Color.primary)
                     }
                     row("Marge", item.margin?.percentText)
                 }

@@ -33,14 +33,14 @@ enum ItemStatus: String, CaseIterable, Identifiable, Codable {
         self == .lager || self == .online || self == .reserviert
     }
 
+    /// Gleiche Farben wie die Abzeichen in der Web-App (.badge in style.css)
     var color: Color {
         switch self {
-        case .lager: return .gray
-        case .online: return .blue
-        case .reserviert: return .purple
-        case .zuVersenden: return .orange
-        case .versendet: return .teal
-        case .verkauft: return .green
+        case .lager: return .secondary
+        case .online: return .accentColor
+        case .reserviert: return .reserved
+        case .zuVersenden, .versendet: return .warn
+        case .verkauft: return .good
         }
     }
 
