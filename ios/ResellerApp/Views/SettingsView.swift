@@ -43,10 +43,10 @@ struct SettingsView: View {
             ProgressView()
         case .ok(let count):
             Label("Verbunden – \(count) Artikel gefunden", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.good)
         case .failed(let message):
             Label(message, systemImage: "xmark.octagon.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(Color.bad)
         }
     }
 
