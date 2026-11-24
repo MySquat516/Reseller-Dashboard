@@ -5,6 +5,8 @@ const todayLocal = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 const eur = n => (n == null ? '–' : n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }));
+// Ganze Euro für Diagrammachsen (Tabellen und Tooltips behalten die Cents)
+const eur0 = n => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const pct = n => (n == null ? '–' : (n * 100).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %');
 const num1 = n => (n == null ? '–' : n.toLocaleString('de-DE', { maximumFractionDigits: 1 }));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -595,6 +597,11 @@ async function loadSettings() {
 const monthDate = key => { const [y, m] = key.split('-').map(Number); return new Date(y, m - 1, 1); };
 const monthLabel = key => monthDate(key).toLocaleDateString('de-DE', { month: 'short', year: 'numeric' });
 const monthLong = key => monthDate(key).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+// Achsenbeschriftung: „Aug.“, das Jahr nur am Anfang und im Januar (zweite Zeile), damit nichts gedreht werden muss
+const monthTick = (keys, i) => {
+  const short = monthDate(keys[i]).toLocaleDateString('de-DE', { month: 'short' });
+  return i === 0 || keys[i].endsWith('-01') ? [short, keys[i].slice(0, 4)] : short;
+};
 const sgn = n => (n > 0 ? '+' : '') + eur(n);
 const dateDe = iso => iso.split('-').reverse().join('.');
 const verk = n => `${n} ${n === 1 ? 'Verkauf' : 'Verkäufe'}`;
@@ -607,14 +614,81 @@ function kpi(label, value, sub = '', c = '') {
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
+// Fadenkreuz bei Liniendiagrammen: senkrechte Linie am Punkt, zu dem gerade der Tooltip gehört
+const crosshair = {
+  id: 'crosshair',
+  afterDatasetsDraw(ch) {
+    const active = ch.tooltip?.getActiveElements() || [];
+    if (!active.length) return;
+    const { ctx, chartArea: a } = ch, x = active[0].element.x;
+    ctx.save();
+    ctx.strokeStyle = cssVar('--muted');
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke();
+    ctx.restore();
+  }
+};
+
+// Ruhige Achsen für alle Diagramme: Gitterlinien nur quer zur Werteachse (also waagerecht bei senkrechten Balken),
+// keine Achsenlinie an der Werteachse, Beschriftung nie gedreht. Angaben im Diagramm selbst haben Vorrang.
+function calmAxes(config, canvas) {
+  const o = (config.options ??= {}), s = (o.scales ??= {});
+  const horizontal = o.indexAxis === 'y', val = horizontal ? 'x' : 'y', cat = horizontal ? 'y' : 'x';
+  const merge = (d, x = {}) => ({ ...d, ...x, grid: { ...d.grid, ...x.grid }, ticks: { ...d.ticks, ...x.ticks }, border: { ...d.border, ...x.border } });
+  const muted = cssVar('--muted'), border = cssVar('--border');
+  // Die Nulllinie ist kräftiger, damit negative Werte klar auf der anderen Seite liegen
+  s[val] = merge({ border: { display: false }, grid: { drawTicks: false, color: c => (c.tick?.value === 0 ? muted : border) },
+    ticks: { padding: 8, maxTicksLimit: 5 } }, s[val]);
+  // Waagerechte Balken zeigen Namen: jede Beschriftung bleibt stehen. Senkrechte (Monate) dürfen ausdünnen
+  s[cat] = merge({ grid: { display: false }, ticks: horizontal ? { autoSkip: false } : { maxRotation: 0, autoSkipPadding: 12 } }, s[cat]);
+  if (config.type === 'bar') {
+    // Balken: 4 px runde Enden nur außen, am Nullpunkt gerade; ganze Zeile/Spalte löst den Tooltip aus (Touch)
+    o.interaction ??= { mode: 'index', axis: cat, intersect: false };
+    const n = config.data.labels.length, sets = config.data.datasets, width = canvas.parentElement.clientWidth;
+    if (horizontal && width) {
+      // Höhe wächst mit der Zahl der Balken (ca. 30 px je Zeile), statt die Balken in ein festes Format zu quetschen
+      o.aspectRatio ??= Math.max(1, Math.min(3, width / (n * 30 + 48)));
+    }
+    // Gruppierte Balken (Umsatz/Gewinn) stehen dicht nebeneinander, ca. 40 px je Balken
+    const catPct = width > 120 ? Math.min(0.8, (sets.length * 40) / ((width - 60) / Math.max(1, n))) : 0.8;
+    for (const d of sets) {
+      d.borderRadius ??= 4;
+      d.borderSkipped ??= 'start';
+      d.pointStyle ??= 'rectRounded';   // Legende als kleines Rechteck
+      if (horizontal) d.maxBarThickness ??= 22;
+      else { d.barPercentage ??= 0.94; d.categoryPercentage ??= catPct; }
+    }
+  }
+  if (config.type === 'line') {
+    // Linien: 2 px, Punkte erst beim Antippen
+    for (const d of config.data.datasets) {
+      d.borderWidth ??= 2;
+      d.pointRadius = 0;
+      d.pointHoverRadius ??= 5;
+    }
+    (config.plugins ??= []).push(crosshair);
+  }
+  return config;
+}
+
 function chart(id, config) {
   charts[id]?.destroy();
-  Chart.defaults.color = cssVar('--muted');
-  Chart.defaults.borderColor = cssVar('--border');
+  const D = Chart.defaults;
+  D.color = cssVar('--muted');
+  D.borderColor = cssVar('--border');
+  D.font.family = getComputedStyle(document.body).fontFamily;
   // Chart-Text skaliert mit der Systemschrift (rem-Basis), mindestens 12 px
-  Chart.defaults.font.size = Math.max(12, Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.76));
-  if (reduceMotion) Chart.defaults.animation = false;
-  charts[id] = new Chart($('#' + id), config);
+  D.font.size = Math.max(12, Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) * 0.76));
+  Object.assign(D.plugins.legend, { align: 'start' });
+  // Legende nutzt die Form des Datensatzes (Rechteck bei Balken, Kreis/Dreieck im Streudiagramm)
+  Object.assign(D.plugins.legend.labels, { usePointStyle: true, boxWidth: 10, boxHeight: 10, padding: 14 });
+  // Tooltip in umgekehrten Farben: hebt sich in Hell und Dunkel ab
+  Object.assign(D.plugins.tooltip, { backgroundColor: cssVar('--text'), titleColor: cssVar('--surface'), bodyColor: cssVar('--surface'),
+    padding: 10, cornerRadius: 8, boxPadding: 4, usePointStyle: true });
+  if (reduceMotion) D.animation = false;
+  const canvas = $('#' + id);
+  charts[id] = new Chart(canvas, calmAxes(config, canvas));
 }
 
 // Screenreader: Das Canvas ist ein Bild, also bekommt es eine Textfassung der Kernwerte
@@ -770,19 +844,23 @@ async function renderStats() {
     hasOpen ? '' : kpi('Offene Zahlungen', eur(0), 'verkauft, noch nicht bezahlt, alle Zeiträume')
   ].join('');
 
-  // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
-  const C = { revenue: cssVar('--chart-revenue'), profit: cssVar('--good'), count: cssVar('--muted') };
+  // Umsatz und Anzahlen = neutral grau, Gewinn und Marge = Grün, negative Werte = Rot (dazu zeigt der Balken nach links/unten).
+  // Die Variablen sind für Hell und Dunkel kontrastgeprüft
+  const C = { revenue: cssVar('--chart-revenue'), profit: cssVar('--good'), loss: cssVar('--bad'), count: cssVar('--chart-revenue') };
+  const signColor = v => (v < 0 ? C.loss : C.profit);
+  const monthKeys = s.monthly.map(m => m.month);
 
   chart('ch-monthly', {
     type: 'bar',
     data: {
-      labels: s.monthly.map(m => monthLabel(m.month)),
+      labels: monthKeys.map(monthLabel),
       datasets: [
         { label: 'Umsatz', data: s.monthly.map(m => m.revenue), backgroundColor: C.revenue },
         { label: 'Gewinn', data: s.monthly.map(m => m.profit), backgroundColor: C.profit }
       ]
     },
-    options: { plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eur(c.parsed.y)}` } } }, scales: { y: { ticks: { callback: v => eur(v) } } } }
+    options: { plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${eur(c.parsed.y)}` } } },
+      scales: { x: { ticks: { callback: v => monthTick(monthKeys, v) } }, y: { ticks: { callback: v => eur0(v) } } } }
   });
   const lastM = s.monthly[s.monthly.length - 1];
   describe('ch-monthly', 'Balkendiagramm Umsatz und Gewinn pro Monat', lastM
@@ -791,8 +869,9 @@ async function renderStats() {
 
   chart('ch-platform', {
     type: 'bar',
-    data: { labels: s.byPlatform.map(p => p.name), datasets: [{ label: 'Gewinn', data: s.byPlatform.map(p => p.profit), backgroundColor: C.profit }] },
-    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => eur(c.parsed.x) + ` (${s.byPlatform[c.dataIndex].count} Verk.)` } } } }
+    data: { labels: s.byPlatform.map(p => p.name), datasets: [{ label: 'Gewinn', data: s.byPlatform.map(p => p.profit), backgroundColor: s.byPlatform.map(p => signColor(p.profit)) }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => eur(c.parsed.x) + ` (${s.byPlatform[c.dataIndex].count} Verk.)` } } },
+      scales: { x: { ticks: { callback: v => eur0(v) } } } }
   });
   describe('ch-platform', 'Gewinn nach Plattform', s.byPlatform.map(p => `${p.name} ${eur(p.profit)}`));
 
@@ -805,8 +884,10 @@ async function renderStats() {
 
   chart('ch-category', {
     type: 'bar',
-    data: { labels: s.byCategory.map(c => c.name), datasets: [{ label: 'Marge', data: s.byCategory.map(c => c.margin * 100), backgroundColor: C.profit }] },
-    options: { plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => pct(c.parsed.y / 100) } } }, scales: { y: { ticks: { callback: v => v + ' %' } } } }
+    data: { labels: s.byCategory.map(c => c.name), datasets: [{ label: 'Marge', data: s.byCategory.map(c => c.margin * 100), backgroundColor: s.byCategory.map(c => signColor(c.margin)) }] },
+    // Waagerecht, damit die Kategorienamen lesbar bleiben statt schräg zu stehen
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => pct(c.parsed.x / 100) } } },
+      scales: { x: { ticks: { callback: v => Math.round(v) + ' %' } } } }
   });
   describe('ch-category', 'Marge nach Kategorie', s.byCategory.map(c => `${c.name} ${pct(c.margin)}`));
 

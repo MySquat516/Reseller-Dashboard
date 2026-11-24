@@ -1,12 +1,11 @@
 // ---------- Analysen in der Verkäufe-Ansicht ----------
-// Nutzt chart(), describe(), table(), eur, pct, sgn, cls, dateDe, verk, cssVar aus app.js und `sales` aus sales.js.
+// Nutzt chart(), describe(), table(), eur, eur0, pct, sgn, cls, dateDe, verk, cssVar aus app.js und `sales` aus sales.js.
 // Die Diagramme folgen dem gewählten Zeitraum, nicht den Filtern der Tabelle darunter.
 //
 // Farben: Gewinn = --good, Verlust = --bad, neutral = --muted. Grün und Rot liegen für Rot-Grün-Schwäche nah
 // beieinander (Palette-Validator: ΔE 5,5 bis 7,4), deshalb steckt das Vorzeichen immer noch in einem zweiten Merkmal:
 // Form (Kreis/Dreieck) im Streudiagramm, Richtung vom Nullpunkt bei den Balken, dazu Legende und Tooltips.
 
-const eur0 = n => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const dayNum = iso => { const [y, m, d] = iso.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; };
 const round2 = n => Math.round(n * 100) / 100;
 
@@ -43,8 +42,8 @@ function renderCumulative(rows, c) {
     spanYears ? { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' } : { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
   chart('ch-cum', {
     type: 'line',
-    data: { datasets: [{ label: 'Kumulierter Gewinn', data: pts, borderColor: c.good, backgroundColor: c.good, borderWidth: 2,
-      pointRadius: pts.length <= 60 ? 4 : 0, pointHoverRadius: 6, pointBorderColor: c.surface, pointBorderWidth: 1.5, tension: 0 }] },
+    data: { datasets: [{ label: 'Kumulierter Gewinn', data: pts, borderColor: c.good, backgroundColor: c.good,
+      pointHoverBorderColor: c.surface, pointHoverBorderWidth: 2, tension: 0 }] },
     options: {
       parsing: false,
       interaction: { mode: 'nearest', axis: 'x', intersect: false },
