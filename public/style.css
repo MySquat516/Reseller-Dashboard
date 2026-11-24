@@ -26,7 +26,7 @@
   --fs-base: 0.882rem;  /* 15 px  Fließtext, Buttons, Felder, Kartentitel */
   --fs-md: 1rem;        /* 17 px  Seiten- und Dialogtitel */
   --fs-lg: 1.412rem;    /* 24 px  Kennzahlen */
-  --fs-xl: 1.882rem;    /* 32 px  Hauptzahl (Monatsgewinn) */
+  --fs-xl: 2.824rem;    /* 48 px  Hauptzahl (Monatsgewinn) */
   --fw-medium: 500;
   --fw-semibold: 600;
   --fw-bold: 700;
@@ -56,13 +56,16 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; font: var(--fs-base)/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); }
-header { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; justify-content: flex-start; padding: var(--sp-4) var(--sp-5); border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+header { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; justify-content: flex-start; padding: var(--sp-4) max(var(--sp-5), calc((100% - 1280px) / 2 + var(--sp-5))); border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 5; }
 h1 { font-size: var(--fs-md); margin: 0 auto 0 0; }
 nav { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-4); cursor: pointer; }
 button:hover { border-color: var(--accent); }
-button.tab.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* Tabs ruhig, damit nur „+ Neuer Artikel“ als Hauptaktion gefüllt ist */
+button.tab { background: transparent; border-color: transparent; color: var(--muted); }
+button.tab:hover { border-color: transparent; color: var(--text); }
+button.tab.active { background: var(--surface-2); border-color: var(--border); color: var(--text); font-weight: var(--fw-semibold); }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 button.danger { color: var(--bad); border-color: var(--bad); background: transparent; }
 main { max-width: 1280px; margin: 0 auto; padding: var(--sp-5) var(--sp-5) calc(var(--sp-5) + env(safe-area-inset-bottom)); }
@@ -84,11 +87,29 @@ button, .tab, .item, .thumb { touch-action: manipulation; -webkit-tap-highlight-
   header { padding: var(--sp-3) var(--sp-4); }
 }
 
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-3); margin-bottom: var(--sp-4); }
-.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-4); }
-.kpi .label { color: var(--muted); font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; }
-.kpi .value { font-size: var(--fs-lg); font-weight: var(--fw-bold); margin-top: var(--sp-1); font-variant-numeric: tabular-nums; }
+/* Kennzahlen: ein Panel, die 1-px-Lücken zeigen den Rahmen als Trennlinien */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; margin-bottom: var(--sp-3); }
+.kpis > .kpi { background: var(--surface); padding: var(--sp-4); min-width: 0; }
+.kpi .label { color: var(--muted); font-size: var(--fs-sm); }
+.kpi .value { font-size: var(--fs-lg); font-weight: var(--fw-semibold); line-height: 1.25; margin-top: var(--sp-1); overflow-wrap: anywhere; }
 .kpi .sub { color: var(--muted); font-size: var(--fs-sm); margin-top: 2px; }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Sehr schmale Handys: Kennzahlen eine Stufe kleiner, damit „1.399,49 €“ in die halbe Breite passt */
+@media (max-width: 380px) { .kpis > .kpi { padding: var(--sp-3); } .kpis .kpi .value { font-size: var(--fs-md); } }
+/* Zusatzkennzahlen: kompakte Liste ohne eigene Rahmen */
+.kpis-more { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: var(--sp-4) var(--sp-5); padding: var(--sp-4); margin-bottom: var(--sp-5); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); }
+.kpis-more[hidden] { display: none; }
+.kpis-more .value { font-size: var(--fs-md); margin-top: 2px; }
+.kpis-more .sub { font-size: var(--fs-xs); }
+/* Offene Zahlungen als Hinweis mit Icon */
+.kpi-alert { display: flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-2); font-size: var(--fs-sm); }
+.kpi-alert[hidden] { display: none; }
+.kpi-alert .icon { color: var(--warn); width: 18px; height: 18px; }
+/* „Mehr Kennzahlen“ als Textknopf mit Pfeil */
+.kpi-toggle { display: inline-flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-4); padding-left: 0; padding-right: 0; background: transparent; border-color: transparent; color: var(--accent); font-weight: var(--fw-medium); }
+.kpi-toggle:hover { border-color: transparent; text-decoration: underline; }
+.kpi-toggle::after { content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); }
+.kpi-toggle[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
 .pos { color: var(--good); } .neg { color: var(--bad); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: var(--sp-4); }
@@ -168,10 +189,13 @@ label { display: flex; flex-direction: column; gap: var(--sp-1); font-size: var(
 .seg button + button { border-left: 1px solid var(--border); }
 .seg button.active { background: var(--accent); color: var(--on-accent); }
 .muted { color: var(--muted); }
-.month-card { display: flex; flex-wrap: wrap; gap: var(--sp-4) var(--sp-6); justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-4); margin-bottom: var(--sp-4); }
-.mc-title { color: var(--muted); font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .05em; }
-.mc-value { font-size: var(--fs-xl); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; line-height: 1.2; }
-.mc-sub, .mc-cmp { font-size: var(--fs-sm); }
+/* Monatswert: die eine große Zahl, ohne Karte; die Linie trennt ihn vom Zeitraum-Bereich */
+.hero { display: flex; flex-wrap: wrap; gap: var(--sp-4) var(--sp-6); justify-content: space-between; align-items: flex-end; padding: var(--sp-2) 0 var(--sp-5); margin-bottom: var(--sp-5); border-bottom: 1px solid var(--border); }
+.mc-title { color: var(--muted); font-size: var(--fs-base); font-weight: var(--fw-medium); }
+/* Große Zahlen mit Proportionalziffern; tabular-nums nur in Tabellen und Achsen */
+.mc-value { font-size: min(var(--fs-xl), 12vw); font-weight: var(--fw-bold); line-height: 1.1; letter-spacing: -0.02em; margin: var(--sp-1) 0; overflow-wrap: anywhere; }
+.mc-sub { font-size: var(--fs-base); }
+.mc-cmp { font-size: var(--fs-sm); }
 .mc-cmp { display: flex; flex-direction: column; gap: var(--sp-1); text-align: right; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
 .card-head h3 { margin: 0; }
@@ -183,10 +207,11 @@ tfoot td { font-weight: var(--fw-bold); border-top: 2px solid var(--border); bor
 h1 { display: flex; align-items: center; gap: var(--sp-3); }
 .logo { height: 32px; width: auto; }
 @media (max-width: 760px) {
-  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar { flex-wrap: wrap; gap: var(--sp-2); }
+  .toolbar .seg { flex: 1 1 auto; min-width: 0; }
   .seg { display: flex; }
   .seg { flex-wrap: wrap; }
-  .seg button { flex: 1 1 auto; padding: var(--sp-2) var(--sp-2); font-size: var(--fs-sm); white-space: nowrap; }
+  .seg button { flex: 1 1 auto; padding: var(--sp-2) var(--sp-1); font-size: var(--fs-sm); white-space: nowrap; }
   .mc-cmp { text-align: left; }
 }
 
@@ -311,12 +336,12 @@ details.sale > summary:focus-visible { outline: 2px solid var(--accent); outline
 .skel-lines .skel:nth-child(2n) { width: 85%; }
 .skel-item { pointer-events: none; }
 .skel-item .body .skel { display: block; }
-#view-dashboard.loaded[aria-busy="true"] :is(.month-card, .kpis, .grid) { opacity: .55; transition: opacity .15s; }
+#view-dashboard.loaded[aria-busy="true"] :is(.hero, .kpis, .kpi-alert, .kpis-more, .grid) { opacity: .55; transition: opacity .15s; }
 @media (prefers-reduced-motion: reduce) {
   .skel, .item .img.skel { animation: none; }
-  #view-dashboard.loaded[aria-busy="true"] :is(.month-card, .kpis, .grid) { transition: none; }
+  #view-dashboard.loaded[aria-busy="true"] :is(.hero, .kpis, .kpi-alert, .kpis-more, .grid) { transition: none; }
 }
-#view-dashboard.failed:not(.loaded) :is(.month-card, .kpis, .grid) { display: none; }
+#view-dashboard.failed:not(.loaded) :is(.hero, .kpis, .kpi-alert, .kpis-more, .grid) { display: none; }
 
 /* Tastatur und Fokus (HIG accessibility.md › Speech: Full Keyboard Access) */
 button:focus-visible, a.btn:focus-visible, .item:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -332,13 +357,7 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 .info-btn { border: 0; background: transparent; color: var(--muted); line-height: 1; padding: var(--sp-2) var(--sp-3); min-width: 44px; min-height: 44px; }
 .info-btn .icon { width: 20px; height: 20px; }
 #period-hint { flex-basis: 100%; margin: 0; }
-.kpi-toggle { display: none; }
-@media (max-width: 760px) {
-  /* Links statt volle Breite: so liegt der Plus-Button unten rechts nie darüber */
-  .kpi-toggle { display: block; width: auto; margin: -4px 0 var(--sp-4); background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
-  .kpis:not(.expanded) .kpi-extra { display: none; }
-}
-@media (max-width: 760px) { .info-btn { align-self: flex-start; margin-left: -12px; } }
+@media (max-width: 760px) { .info-btn { margin-right: calc(-1 * var(--sp-3)); } }
 
 /* Verkäufe */
 .sales-card { margin-top: var(--sp-4); }
@@ -466,3 +485,10 @@ button:has(> .icon), a.btn { display: inline-flex; align-items: center; justify-
 .item .img > .icon { width: 40px; height: 40px; stroke-width: 1.4; }
 .dz-icon { width: 28px; height: 28px; margin: 0 auto var(--sp-1); }
 @media (max-width: 760px) { .item .img > .icon { width: 28px; height: 28px; } }
+
+/* Mittlere Breiten (z. B. iPad hochkant): nur das Logo, damit Tabs und „+ Neuer Artikel“ in eine Zeile passen.
+   Der Titel bleibt für Screenreader lesbar. */
+@media (min-width: 761px) and (max-width: 1023px) {
+  h1 .h1-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  button.tab { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+}

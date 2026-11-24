@@ -599,8 +599,9 @@ const sgn = n => (n > 0 ? '+' : '') + eur(n);
 const dateDe = iso => iso.split('-').reverse().join('.');
 const verk = n => `${n} ${n === 1 ? 'Verkauf' : 'Verkäufe'}`;
 
+// Werte stehen in Textfarbe; Farbe nur als Signal für Verluste (Klasse "neg"), nicht für jeden Gewinn
 function kpi(label, value, sub = '', c = '') {
-  return `<div class="kpi"><div class="label">${label}</div><div class="value ${c}">${value}</div><div class="sub">${sub}</div></div>`;
+  return `<div class="kpi"><div class="label">${label}</div><div class="value ${c === 'neg' ? 'neg' : ''}">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`;
 }
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -642,12 +643,14 @@ function renderMonthCard(tm) {
     const pctTxt = p.toDate.profit > 0 ? ` (${delta >= 0 ? '+' : '−'}${pct(Math.abs(delta) / p.toDate.profit)})` : '';
     const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '●';
     cmp = `<span class="${cls(delta)}"><strong>${arrow} ${sgn(delta)}${pctTxt}</strong></span> `
-      + `<span class="muted">gegenüber ${monthLong(p.month)} bis zum ${p.cutoffDay}.</span>`;
+      + `<span class="muted">gegenüber 1.–${p.cutoffDay}. ${monthDate(p.month).toLocaleDateString('de-DE', { month: 'long' })}</span>`;
   }
-  $('#month-card').innerHTML = `
+  const card = $('#month-card');
+  card.removeAttribute('aria-hidden');
+  card.innerHTML = `
     <div class="mc-main">
-      <div class="mc-title">Gewinn ${monthLong(tm.month)}</div>
-      <div class="mc-value ${cls(tm.profit)}">${eur(tm.profit)}</div>
+      <div class="mc-title">Gewinn im ${monthLong(tm.month)}</div>
+      <div class="mc-value ${tm.profit < 0 ? 'neg' : ''}">${eur(tm.profit)}</div>
       <div class="mc-sub muted">${verk(tm.count)} · Umsatz ${eur(tm.revenue)}</div>
     </div>
     <div class="mc-cmp">
@@ -711,10 +714,17 @@ $('#dead-days').addEventListener('change', e => {
   loadStats();
 });
 
-$('#kpi-toggle').addEventListener('click', () => {
-  const open = $('#kpis').classList.toggle('expanded');
-  $('#kpi-toggle').setAttribute('aria-expanded', open);
+// „Mehr Kennzahlen“ bleibt pro Browser offen oder zu (nur Bequemlichkeit, daher try/catch)
+function setKpisMore(open) {
+  $('#kpis-more').hidden = !open;
+  $('#kpi-toggle').setAttribute('aria-expanded', String(open));
   $('#kpi-toggle').textContent = open ? 'Weniger Kennzahlen' : 'Mehr Kennzahlen';
+}
+try { setKpisMore(localStorage.getItem('kpis-more') === '1'); } catch { setKpisMore(false); }
+$('#kpi-toggle').addEventListener('click', () => {
+  const open = $('#kpis-more').hidden;
+  setKpisMore(open);
+  try { localStorage.setItem('kpis-more', open ? '1' : '0'); } catch { /* privater Modus o. Ä. */ }
 });
 $('#period-info').addEventListener('click', () => {
   const p = $('#period-hint'); p.hidden = !p.hidden;
@@ -730,25 +740,35 @@ async function renderStats() {
     + 'Lagerwert, Bestand und Ladenhüter zeigen immer den aktuellen Stand.';
   renderMonthCard(s.thisMonth);
 
-  // Auf dem Handy nur die wichtigsten Kennzahlen, der Rest hinter „Mehr Kennzahlen“ (Klasse kpi-extra)
+  // Vier Kernzahlen für den gewählten Zeitraum, der Rest hinter „Mehr Kennzahlen“
   $('#kpis').innerHTML = [
     kpi('Gewinn', eur(t.profit), `${t.sold} verkauft`, cls(t.profit)),
     kpi('Umsatz', eur(t.revenue), `Kosten ${eur(t.cost)} + Gebühren ${eur(t.fees)}`),
     kpi('Marge', pct(t.margin), `ROI ${pct(t.roi)}`),
-    kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft, aktuell`),
-    kpi('Ø Gewinn / Artikel', eur(t.avgProfit)).replace('class="kpi"', 'class="kpi kpi-extra"'),
-    kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft').replace('class="kpi"', 'class="kpi kpi-extra"'),
-    kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)).replace('class="kpi"', 'class="kpi kpi-extra"'),
-    kpi('Offene Zahlungen', eur(t.openPayments), 'verkauft, noch nicht bezahlt, alle Zeiträume', t.openPayments > 0 ? 'neg' : '').replace('class="kpi"', t.openPayments > 0 ? 'class="kpi"' : 'class="kpi kpi-extra"'),
-    // Zusatzkennzahlen (auf dem Handy hinter „Mehr Kennzahlen“)
+    kpi('Lagerwert', eur(t.stockValue), `${t.unsold} unverkauft, aktuell`)
+  ].join('');
+  $('#kpis').removeAttribute('aria-hidden');
+
+  // Offene Zahlungen sind eine Aufgabe, keine Statistik: als Hinweis mit Icon, nur wenn es welche gibt
+  const hasOpen = t.openPayments > 0;
+  $('#kpi-alert').hidden = !hasOpen;
+  $('#kpi-alert').innerHTML = hasOpen
+    ? `<svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span><strong>${eur(t.openPayments)}</strong> offene Zahlungen: verkauft, aber noch nicht bezahlt (alle Zeiträume)</span>`
+    : '';
+
+  $('#kpis-more').innerHTML = [
+    kpi('Ø Gewinn / Artikel', eur(t.avgProfit), '', cls(t.avgProfit)),
+    kpi('Ø Verkaufspreis', eur(t.avgSalePrice)),
+    kpi('Ø Standzeit', t.avgStandtime == null ? '–' : num1(t.avgStandtime) + ' Tage', 'online → verkauft'),
+    kpi('Ø Preisabschlag', t.avgPriceDiff == null ? '–' : eur(t.avgPriceDiff), 'Verkauf vs. Einstellpreis', cls(t.avgPriceDiff)),
     kpi('Trefferquote', t.hitRate == null ? '–' : pct(t.hitRate), `${t.winners} mit Gewinn, ${t.losers} mit Verlust, ${t.sold - t.winners - t.losers} ±0`),
     kpi('Ø Gewinn je Gewinn-Verkauf', eur(t.avgWin), 'nur Verkäufe über Einkauf + Kosten', cls(t.avgWin)),
     kpi('Ø Verlust je Verlust-Verkauf', eur(t.avgLoss), 'nur Verkäufe unter Einkauf + Kosten', cls(t.avgLoss)),
     kpi('Gewinn pro Standtag', t.profitPerStandDay == null ? '–' : eur(t.profitPerStandDay), 'Gewinn ÷ Tage online (mind. 1 Tag je Artikel)', cls(t.profitPerStandDay)),
-    kpi('Ø Verkaufspreis', eur(t.avgSalePrice)),
     kpi('Erwarteter Gewinn offen', eur(t.openExpectedProfit),
-      `bei Verkauf zum Einstellpreis, ${t.openPricedCount} Artikel` + (t.openUnpricedCount ? `, ${t.openUnpricedCount} ohne Einstellpreis` : ''), cls(t.openExpectedProfit))
-  ].map((html, i) => (i >= 8 ? html.replace('class="kpi"', 'class="kpi kpi-extra"') : html)).join('');
+      `bei Verkauf zum Einstellpreis, ${t.openPricedCount} Artikel` + (t.openUnpricedCount ? `, ${t.openUnpricedCount} ohne Einstellpreis` : ''), cls(t.openExpectedProfit)),
+    hasOpen ? '' : kpi('Offene Zahlungen', eur(0), 'verkauft, noch nicht bezahlt, alle Zeiträume')
+  ].join('');
 
   // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
   const C = { revenue: cssVar('--accent'), profit: cssVar('--good'), count: cssVar('--muted') };
