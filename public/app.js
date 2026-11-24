@@ -66,6 +66,7 @@ async function api(url, opts = {}) {
 document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => showView(b.dataset.view)));
 
+const VIEW_TITLE = { sales: 'Verkäufe', items: 'Artikel', settings: 'Einstellungen' };
 function showView(v) {
   document.querySelectorAll('.tab').forEach(b => {
     const on = b.dataset.view === v;
@@ -77,6 +78,9 @@ function showView(v) {
   $('#view-items').hidden = v !== 'items';
   $('#view-settings').hidden = v !== 'settings';
   document.body.dataset.view = v;
+  const name = VIEW_TITLE[v];
+  $('h1 .h1-view').textContent = name || '';
+  document.title = name ? `${name} – Reseller Dashboard` : 'Reseller Dashboard';
   if (v === 'dashboard') loadStats();
   if (v === 'sales') loadSales();
   if (v === 'settings') { renderSettingsView(); loadBackups(); loadSession(); }
@@ -497,7 +501,7 @@ function renderPresetSelect() {
 const presetRow = p => `
   <div class="ship-row" data-preset="${p.id}"><span class="grow"><strong>${esc(p.name)}</strong> · ${esc(p.carrier || 'kein Anbieter')} · ${eur(p.price)}</span>
     <button type="button" data-edit-preset="${p.id}">Bearbeiten</button>
-    <button type="button" class="danger" data-del-preset="${p.id}">Löschen</button></div>`;
+    <button type="button" data-del-preset="${p.id}">Löschen</button></div>`;
 const presetEditRow = p => `
   <form class="ship-row ship-edit" data-preset="${p.id}">
     <input name="name" required maxlength="80" value="${esc(p.name)}" aria-label="Name">
@@ -698,13 +702,15 @@ function describe(id, title, parts) {
   el.setAttribute('aria-label', parts.length ? `${title}: ${parts.slice(0, 8).join('; ')}` : `${title}: keine Daten`);
 }
 
+// Spaltenklassen: r = rechtsbündig, cls = eigene Klasse (z. B. hide-sm)
+const colCls = c => [c.r ? 'r' : '', c.cls || ''].join(' ').trim();
 function table(rows, cols, foot) {
   if (!rows.length) return '<p class="empty">Noch keine Daten.</p>';
   const tfoot = foot
-    ? `<tfoot><tr>${foot.map((c, i) => `<td class="${cols[i].r ? 'r' : ''}">${c}</td>`).join('')}</tr></tfoot>`
+    ? `<tfoot><tr>${foot.map((c, i) => `<td class="${colCls(cols[i])}">${c}</td>`).join('')}</tr></tfoot>`
     : '';
-  return `<table><thead><tr>${cols.map(c => `<th class="${c.r ? 'r' : ''}">${c.h}</th>`).join('')}</tr></thead><tbody>${
-    rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>${tfoot}</table>`;
+  return `<table><thead><tr>${cols.map(c => `<th class="${colCls(c)}">${c.h}</th>`).join('')}</tr></thead><tbody>${
+    rows.map(r => `<tr>${cols.map(c => `<td class="${colCls(c)}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody>${tfoot}</table>`;
 }
 
 function renderMonthCard(tm) {
@@ -755,7 +761,7 @@ function renderMonthTable(monthly) {
     { h: 'Monat', f: r => monthLabel(r.month) },
     { h: 'Verk.', r: 1, f: r => r.count },
     { h: 'Umsatz', r: 1, f: r => eur(r.revenue) },
-    { h: 'Kosten', r: 1, f: r => eur(r.cost + r.fees) },
+    { h: 'Kosten', r: 1, cls: 'hide-sm', f: r => eur(r.cost + r.fees) },
     { h: 'Gewinn', r: 1, f: r => `<span class="${cls(r.profit)}">${eur(r.profit)}</span>` },
     { h: 'Marge', r: 1, f: r => (r.revenue ? pct(r.profit / r.revenue) : '–') }
   ];

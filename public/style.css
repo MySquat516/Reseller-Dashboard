@@ -115,7 +115,9 @@ button, .tab, .item, .thumb { touch-action: manipulation; -webkit-tap-highlight-
 .kpi-toggle:hover { border-color: transparent; text-decoration: underline; }
 .kpi-toggle::after { content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); }
 .kpi-toggle[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
-.pos { color: var(--good); } .neg { color: var(--bad); }
+/* Beträge stehen in Textfarbe, Rot nur für Verluste. Grün nur, wo es eine Veränderung zeigt (Vergleich zum Vormonat) */
+.neg { color: var(--bad); }
+.mc-cmp .pos { color: var(--good); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: var(--sp-4); }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-4); min-width: 0; }
@@ -153,7 +155,10 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 dialog::backdrop { background: rgba(0,0,0,.6); }
 dialog h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-md); }
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-4); }
-@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+/* Artikel-Formular: links die Artikeldaten, rechts Fotos und darunter Preise. Auf dem Handy untereinander in derselben Reihenfolge */
+.item-cols { grid-template-areas: "artikel fotos" "artikel preise"; grid-template-rows: auto 1fr; align-items: start; }
+.item-cols .f-artikel { grid-area: artikel; } .item-cols .f-fotos { grid-area: fotos; } .item-cols .f-preise { grid-area: preise; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } .item-cols { grid-template-areas: "artikel" "fotos" "preise"; grid-template-rows: none; } }
 fieldset { border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--sp-3); margin: 0; display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
 legend { color: var(--muted); padding: 0 var(--sp-2); font-size: var(--fs-sm); }
 label { display: flex; flex-direction: column; gap: var(--sp-1); font-size: var(--fs-sm); color: var(--muted); }
@@ -375,7 +380,8 @@ input, select, textarea { min-width: 0; max-width: 100%; }
 #sales-table tbody tr:hover { background: var(--surface-2); }
 button.link { background: transparent; border: 0; border-radius: var(--r-xs); padding: var(--sp-1) 0; min-height: 0; text-align: left; color: var(--text); font-weight: var(--fw-medium); cursor: pointer; }
 button.link:hover { text-decoration: underline; }
-#sales-table .col-title { max-width: 260px; overflow-wrap: anywhere; }
+/* Titel brechen zwischen Wörtern um, nicht mitten im Wort; die Tabelle scrollt auf dem Handy dafür seitlich */
+#sales-table .col-title { min-width: 9em; max-width: 260px; overflow-wrap: break-word; }
 ol.rank { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 ol.rank li { display: flex; justify-content: space-between; gap: var(--sp-3); align-items: baseline; padding: var(--sp-1) 0; border-bottom: 1px solid var(--border); }
 ol.rank li:last-child { border-bottom: 0; }
@@ -497,3 +503,14 @@ button:has(> .icon), a.btn { display: inline-flex; align-items: center; justify-
   h1 .h1-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   button.tab { padding-left: var(--sp-3); padding-right: var(--sp-3); }
 }
+
+/* Handy: großer Titel pro Bereich statt immer „Reseller Dashboard“ (das Dashboard behält Logo und Namen) */
+.h1-view { display: none; }
+@media (max-width: 760px) {
+  body:is([data-view="sales"], [data-view="items"], [data-view="settings"]) h1 :is(.logo, .h1-text) { display: none; }
+  body:is([data-view="sales"], [data-view="items"], [data-view="settings"]) h1 .h1-view { display: inline; font-size: var(--fs-lg); line-height: 1.2; }
+}
+
+/* Spalten, die auf dem Handy wegfallen (z. B. Kosten in der Monatsübersicht) */
+@media (max-width: 760px) { .hide-sm { display: none; } }
+#tbl-monthly :is(th, td) { white-space: nowrap; }
