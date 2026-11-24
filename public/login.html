@@ -7,13 +7,14 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#f4f6fa" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#181d27" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1f1f1c" media="(prefers-color-scheme: dark)">
 <meta name="robots" content="noindex">
 <style>
-  :root { --bg:#0f1218; --surface:#181d27; --surface-2:#212838; --border:#2c3548; --text:#e8ecf4; --muted:#8b95ab; --accent:#5b9dff; --bad:#ff6b6b; --on-accent:#0f1218; }
+  /* Farben wie in style.css (Farbstil „Versandetikett“) */
+  :root { --bg:#161614; --surface:#1f1f1c; --surface-2:#292925; --border:#3a3a35; --field-border:#74746b; --text:#f2f2ec; --muted:#a3a399; --accent:#ffd400; --accent-ink:#ffd400; --bad:#ff7a6b; --on-accent:#1c1c1a; }
   @media (prefers-color-scheme: light) {
-    :root { --bg:#f4f6fa; --surface:#fff; --surface-2:#eef1f7; --border:#d9deea; --text:#1b2130; --muted:#647089; --accent:#2563d6; --bad:#c23030; --on-accent:#fff; }
+    :root { --bg:#ebebe7; --surface:#fff; --surface-2:#f3f3ef; --border:#d3d3cc; --field-border:#8a8a82; --text:#1c1c1a; --muted:#62625b; --accent:#ffd400; --accent-ink:#1c1c1a; --bad:#c42b2b; --on-accent:#1c1c1a; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 16px;
@@ -23,8 +24,8 @@
   h1 img { height: 32px; width: auto; }
   label { display: block; margin-bottom: 14px; font-size: .85rem; color: var(--muted); }
   input { display: block; width: 100%; margin-top: 6px; min-height: 44px; padding: 8px 10px; font: inherit; color: var(--text);
-          background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; }
-  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+          background: var(--surface-2); border: 1px solid var(--field-border); border-radius: 8px; }
+  input:focus { outline: 2px solid var(--accent-ink); outline-offset: -1px; }
   button { width: 100%; min-height: 44px; margin-top: 4px; font: inherit; font-weight: 600; color: var(--on-accent);
            background: var(--accent); border: 0; border-radius: 8px; cursor: pointer; }
   .err { margin: 0 0 14px; padding: 8px 10px; font-size: .85rem; color: var(--bad); border: 1px solid var(--bad); border-radius: 8px; }
