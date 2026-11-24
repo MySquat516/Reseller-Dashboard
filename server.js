@@ -305,22 +305,26 @@ app.delete('/api/items/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Abgelehnte Uploads sofort und vollständig löschen, bevor die Antwort rausgeht. Mit fs.unlink ohne Warten lag die
+// temporäre Datei beim Client manchmal noch im Ordner (Test „Unbekannter Artikel“ schlug zeitweise fehl).
+const discardUploads = files => (files || []).forEach(f => fs.rmSync(f.path, { force: true }));
+
 app.post('/api/items/:id/images', upload.array('images', 40), (req, res) => {
   const it = db.prepare('SELECT id FROM items WHERE id = ?').get(req.params.id);
   if (!it) {
-    (req.files || []).forEach(f => fs.unlink(f.path, () => {}));
+    discardUploads(req.files);
     return res.status(404).json({ error: 'Nicht gefunden' });
   }
   const files = req.files || [];
   // Alles-oder-nichts: Die Antwort-IDs müssen zur Reihenfolge der hochgeladenen Dateien passen.
   const exts = files.map(f => sniffImageExt(f.path));
   if (exts.some(e => !e)) {
-    files.forEach(f => fs.unlink(f.path, () => {}));
+    discardUploads(files);
     return res.status(400).json({ error: 'Mindestens eine Datei ist kein gültiges Bild (erlaubt: JPEG, PNG, GIF, WebP, HEIC, AVIF)' });
   }
   const have = db.prepare('SELECT COUNT(*) c FROM images WHERE item_id = ?').get(it.id).c;
   if (have + files.length > MAX_IMAGES_PER_ITEM) {
-    files.forEach(f => fs.unlink(f.path, () => {}));
+    discardUploads(files);
     return res.status(400).json({ error: `Maximal ${MAX_IMAGES_PER_ITEM} Bilder pro Artikel` });
   }
   files.forEach((f, i) => {
