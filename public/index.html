@@ -26,7 +26,7 @@
   <symbol id="i-package" viewBox="0 0 24 24"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/></symbol>
 </svg>
 <header>
-  <h1><img class="logo" src="/logo.svg" alt=""><span class="h1-text">Reseller Dashboard</span></h1>
+  <h1><img class="logo" src="/logo.svg" alt=""><span class="h1-text">Reseller Dashboard</span><span class="h1-view"></span></h1>
   <nav aria-label="Bereiche">
     <button class="tab active" data-view="dashboard" aria-current="page">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>
@@ -263,8 +263,8 @@
       <div class="banner error" id="form-error" role="alert" hidden><span class="msg grow"></span><button type="button" class="banner-close" aria-label="Meldung schließen">×</button></div>
     </div>
     <div class="dlg-body">
-    <div class="cols">
-      <fieldset>
+    <div class="cols item-cols">
+      <fieldset class="f-artikel">
         <legend>Artikel</legend>
         <label>Titel* <input name="title" required></label>
         <label>Beschreibung <textarea name="description" rows="3"></textarea></label>
@@ -290,6 +290,11 @@
           </select>
         </label>
         <label>Notizen <textarea name="notes" rows="2"></textarea></label>
+      </fieldset>
+
+      <!-- Eigener Block: am Desktop rechts oben, auf dem Handy direkt nach den Artikeldaten -->
+      <fieldset class="f-fotos">
+        <legend>Fotos</legend>
         <div id="dropzone" class="dropzone" tabindex="0" role="button">
           <svg class="icon dz-icon" aria-hidden="true"><use href="#i-camera"/></svg>
           <span class="dz-desktop">Bilder hierher ziehen, einfügen (Strg+V) oder klicken zum Auswählen</span>
@@ -301,7 +306,7 @@
         <small id="gallery-count" class="hint"></small>
       </fieldset>
 
-      <fieldset>
+      <fieldset class="f-preise">
         <legend>Preise &amp; Verkauf</legend>
         <div class="row">
           <label>Einkaufspreis € <input type="number" inputmode="decimal" step="0.01" min="0" name="purchase_price"></label>
