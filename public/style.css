@@ -1,16 +1,22 @@
 :root {
-  --bg: #0f1218;
-  --surface: #181d27;
-  --surface-2: #212838;
-  --border: #2c3548;
-  --text: #e8ecf4;
-  --muted: #8b95ab;
-  --accent: #5b9dff;
-  --good: #3ecf8e;
-  --bad: #ff6b6b;
-  --warn: #f5b942;
-  --accent2: #b48cff;
-  --on-accent: #0f1218;   /* Text auf Akzentfläche: dunkel auf #5b9dff = 6,89:1 (Weiß wären nur 2,72:1) */
+  /* Farbstil „Versandetikett“: Schwarz auf Weiß wie ein Paketaufkleber, Signalgelb nur für Aktionen.
+     --accent ist eine Fläche (Hauptbutton, aktiver Schalter, Plus-Button), nie Schrift auf hellem Grund.
+     --accent-ink ist der Akzent für Text, Fokusrahmen und Hover. Alle Textfarben mind. 4,5:1. */
+  --bg: #161614;
+  --surface: #1f1f1c;
+  --surface-2: #292925;
+  --border: #3a3a35;
+  --field-border: #74746b; /* Eingabefelder: mind. 3:1 zu Feld und Umgebung */
+  --text: #f2f2ec;
+  --muted: #a3a399;
+  --accent: #ffd400;
+  --on-accent: #1c1c1a;   /* 11,9:1 auf Gelb */
+  --accent-ink: #ffd400;  /* Gelb als Schrift geht nur auf dunklem Grund */
+  --good: #4fd08f;
+  --bad: #ff7a6b;
+  --warn: #ff9f43;        /* Orange statt Gelb, damit Warnungen nicht wie Aktionen aussehen */
+  --accent2: #b3a6ff;
+  --chart-revenue: #7d7d75; /* Umsatz neutral, Gewinn (--good) ist das Signal */
   /* Overlays auf Fotos sind in beiden Modi dunkel */
   --scrim: rgba(0, 0, 0, .72);
   --on-scrim: #ffffff;
@@ -47,11 +53,10 @@
 }
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f4f6fa; --surface: #ffffff; --surface-2: #eef1f7; --border: #d9deea;
+    --bg: #ebebe7; --surface: #ffffff; --surface-2: #f3f3ef; --border: #d3d3cc; --field-border: #8a8a82;
     /* Statusfarben als Text: mind. 4,5:1 auf Weiß und auf --surface-2 */
-    --text: #1b2130; --muted: #647089; --accent: #2563d6; --good: #0b7a4f; --bad: #c23030; --warn: #8f6000;
-    --accent2: #7a4fd1;
-    --on-accent: #ffffff;
+    --text: #1c1c1a; --muted: #62625b; --accent: #ffd400; --on-accent: #1c1c1a; --accent-ink: #1c1c1a;
+    --good: #0b7a4f; --bad: #c42b2b; --warn: #8a5a00; --accent2: #5b4fd1; --chart-revenue: #93938b;
   }
 }
 * { box-sizing: border-box; }
@@ -61,7 +66,7 @@ h1 { font-size: var(--fs-md); margin: 0 auto 0 0; }
 nav { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-4); cursor: pointer; }
-button:hover { border-color: var(--accent); }
+button:hover { border-color: var(--accent-ink); }
 /* Tabs ruhig, damit nur „+ Neuer Artikel“ als Hauptaktion gefüllt ist */
 button.tab { background: transparent; border-color: transparent; color: var(--muted); }
 button.tab:hover { border-color: transparent; color: var(--text); }
@@ -106,7 +111,7 @@ button, .tab, .item, .thumb { touch-action: manipulation; -webkit-tap-highlight-
 .kpi-alert[hidden] { display: none; }
 .kpi-alert .icon { color: var(--warn); width: 18px; height: 18px; }
 /* „Mehr Kennzahlen“ als Textknopf mit Pfeil */
-.kpi-toggle { display: inline-flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-4); padding-left: 0; padding-right: 0; background: transparent; border-color: transparent; color: var(--accent); font-weight: var(--fw-medium); }
+.kpi-toggle { display: inline-flex; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-4); padding-left: 0; padding-right: 0; background: transparent; border-color: transparent; color: var(--accent-ink); font-weight: var(--fw-medium); }
 .kpi-toggle:hover { border-color: transparent; text-decoration: underline; }
 .kpi-toggle::after { content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); }
 .kpi-toggle[aria-expanded="true"]::after { transform: translateY(2px) rotate(-135deg); }
@@ -126,12 +131,12 @@ td.r, th.r { text-align: right; }
 
 .filters { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-4); flex-wrap: wrap; }
 .filters input { flex: 1; min-width: 200px; }
-input, select, textarea { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-3); width: 100%; }
-input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+input, select, textarea { background: var(--surface-2); border: 1px solid var(--field-border); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-3); width: 100%; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-ink); outline-offset: -1px; }
 
 .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-4); }
 .item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; }
-.item:hover { border-color: var(--accent); }
+.item:hover { border-color: var(--accent-ink); }
 .item .img { aspect-ratio: 1; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
 .item .img img { width: 100%; height: 100%; object-fit: cover; }
 .item .body { padding: var(--sp-3) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-1); }
@@ -139,7 +144,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .item .meta { color: var(--muted); font-size: var(--fs-sm); }
 .item .price { display: flex; justify-content: space-between; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
 .badge { display: inline-block; font-size: var(--fs-sm); padding: 2px var(--sp-2); border-radius: var(--r-pill); border: 1px solid var(--border); width: fit-content; }
-.badge.lager { color: var(--muted); } .badge.online { color: var(--accent); border-color: var(--accent); }
+.badge.lager { color: var(--muted); } .badge.online { color: var(--accent-ink); border-color: var(--accent-ink); }
 .badge.verkauft { color: var(--good); border-color: var(--good); } .badge.versendet { color: var(--warn); border-color: var(--warn); }
 .badge.zu_versenden { color: var(--warn); border-color: var(--warn); border-style: dashed; }
 .badge.reserviert { color: var(--accent2); border-color: var(--accent2); }
@@ -155,7 +160,7 @@ label { display: flex; flex-direction: column; gap: var(--sp-1); font-size: var(
 .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-3); }
 .dropzone { border: 2px dashed var(--border); border-radius: var(--r-md); padding: var(--sp-4); text-align: center; cursor: pointer; color: var(--muted); display: flex; flex-direction: column; gap: var(--sp-1); }
 .dropzone small { font-size: var(--fs-sm); opacity: .8; }
-.dropzone:hover, .dropzone:focus-visible, .dropzone.over { border-color: var(--accent); color: var(--text); background: var(--surface-2); outline: none; }
+.dropzone:hover, .dropzone:focus-visible, .dropzone.over { border-color: var(--accent-ink); color: var(--text); background: var(--surface-2); outline: none; }
 .hint { color: var(--muted); font-size: var(--fs-sm); }
 .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: var(--sp-2); }
 .thumb { position: relative; aspect-ratio: 1; border-radius: var(--r-sm); overflow: hidden; border: 1px solid var(--border); cursor: grab; background: var(--surface-2); }
@@ -225,7 +230,7 @@ h1 { display: flex; align-items: center; gap: var(--sp-3); }
 @media (max-width: 640px) { .row3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .row3 button { grid-column: 1 / -1; } }
 /* Link-Buttons (Downloads) sehen aus wie normale Buttons: gleiche Fläche, Schrift und Abstände */
 a.btn { display: inline-flex; align-items: center; padding: var(--sp-2) var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface-2); color: var(--text); text-decoration: none; }
-a.btn:hover { border-color: var(--accent); }
+a.btn:hover { border-color: var(--accent-ink); }
 
 /* Mobile: Tab-Leiste unten, Plus-Button in Daumenreichweite, Artikel als Liste
    (HIG tab-bars.md, lists-and-tables.md, designing-for-ios.md) */
@@ -248,7 +253,7 @@ a.btn:hover { border-color: var(--accent); }
   button.tab { min-width: 0; }
   button.tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   button.tab svg { display: block; width: 24px; height: 24px; }
-  button.tab.active { background: transparent; color: var(--accent); font-weight: var(--fw-semibold); }
+  button.tab.active { background: transparent; color: var(--accent-ink); font-weight: var(--fw-semibold); }
 
   #btn-new {
     position: fixed; right: 16px; z-index: 6;
@@ -280,7 +285,7 @@ a.btn:hover { border-color: var(--accent); }
   padding: var(--sp-2) var(--sp-3); background: var(--surface); border-bottom: 1px solid var(--border);
 }
 .dlg-bar h2 { margin: 0; font-size: var(--fs-md); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.dlg-bar .cancel { justify-self: start; border-color: transparent; background: transparent; color: var(--accent); }
+.dlg-bar .cancel { justify-self: start; border-color: transparent; background: transparent; color: var(--accent-ink); }
 .dlg-bar .save { justify-self: end; }
 .dlg-body { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
 .dlg-delete { width: 100%; margin-top: var(--sp-4); }
@@ -294,7 +299,7 @@ details.sale > summary::after {
   border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg);
 }
 details.sale[open] > summary::after { transform: rotate(45deg); }
-details.sale > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+details.sale > summary:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; border-radius: var(--r-sm); }
 .sale-fields { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-1); }
 .dz-touch { display: none; }
 @media (pointer: coarse) { .dz-desktop { display: none; } .dz-touch { display: inline; } }
@@ -344,7 +349,7 @@ details.sale > summary:focus-visible { outline: 2px solid var(--accent); outline
 #view-dashboard.failed:not(.loaded) :is(.hero, .kpis, .kpi-alert, .kpis-more, .grid) { display: none; }
 
 /* Tastatur und Fokus (HIG accessibility.md › Speech: Full Keyboard Access) */
-button:focus-visible, a.btn:focus-visible, .item:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:focus-visible, a.btn:focus-visible, .item:focus-visible, select:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
 input[type="search"] { -webkit-appearance: none; appearance: none; }
 h1 { min-width: 0; overflow-wrap: anywhere; }
 /* Große Schrift (Dynamic Type): nichts darf die Seite breiter als den Bildschirm machen */
@@ -400,7 +405,7 @@ body[data-view="settings"] #btn-new { display: none; }
 .mc-goal { flex: 1 1 100%; }
 .goal-text { display: flex; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--fs-sm); margin-bottom: var(--sp-2); }
 .goal-track { height: 8px; border-radius: var(--r-pill); background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
-.goal-fill { height: 100%; background: var(--accent); border-radius: var(--r-pill); }
+.goal-fill { height: 100%; background: var(--accent-ink); border-radius: var(--r-pill); }
 .goal-fill.done { background: var(--good); }
 
 @media (max-width: 360px) { button.tab { font-size: var(--fs-xs); padding-left: 2px; padding-right: 2px; } }
@@ -415,7 +420,7 @@ body[data-view="settings"] #btn-new { display: none; }
 .bk-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin: var(--sp-3) 0 var(--sp-2); }
 a.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 #card-backup h4 { margin: var(--sp-5) 0 var(--sp-1); font-size: var(--fs-sm); font-weight: var(--fw-semibold); }
-#bk-progress { width: 100%; height: 8px; margin: var(--sp-2) 0; accent-color: var(--accent); }
+#bk-progress { width: 100%; height: 8px; margin: var(--sp-2) 0; accent-color: var(--accent-ink); }
 #bk-list { display: flex; flex-direction: column; gap: var(--sp-2); margin-top: var(--sp-2); }
 .bk-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-sm); }
 .bk-row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }

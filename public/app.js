@@ -771,7 +771,7 @@ async function renderStats() {
   ].join('');
 
   // Umsatz = Akzent, Gewinn und Marge = Grün, Anzahlen = neutral. Die Variablen sind für Hell und Dunkel kontrastgeprüft
-  const C = { revenue: cssVar('--accent'), profit: cssVar('--good'), count: cssVar('--muted') };
+  const C = { revenue: cssVar('--chart-revenue'), profit: cssVar('--good'), count: cssVar('--muted') };
 
   chart('ch-monthly', {
     type: 'bar',
